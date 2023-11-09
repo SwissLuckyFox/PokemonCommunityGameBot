@@ -1,8 +1,7 @@
-import datetime
 #Your Oauth token
-OAUTH_TOKEN = "oauth:4qxehhdsg7w1o9kisiawdc0aw6551y"
+OAUTH_TOKEN = ""
 #Your Username.
-Username = "LuckyFox__"
+Username = ""
 #What Channels to join.
 Channels = ['deemonrider',]
 #User The bot should Listen to.
