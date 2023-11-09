@@ -9,7 +9,7 @@ from turtle import home
 import pokemon
 import balls
 from collections import namedtuple
-from config import timeframes
+from config import HowMany, timeframes
 import config
 AutoCatch = config.AutoCatch
 
@@ -166,6 +166,7 @@ class Bot:
         message = self.parse_message(received_msg)
         trainer = self.username
         BuyBall = config.BallToBuy
+        HowMany = config.HowMany
         UserLow = config.Username.lower()
         Emote = config.Emote
         AutoCatch = config.AutoCatch
