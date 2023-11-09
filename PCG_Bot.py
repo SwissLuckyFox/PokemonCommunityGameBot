@@ -72,9 +72,9 @@ class Bot:
         self.channels = config.Channels
         self.PokeBot = config.Pokemonbot.lower()
         self.command_prefix = '@'
-
-    def init(self):
         self.connect()
+    #def init(self):
+        #self.connect()
 
     def send_privmsg(self, channel, text):
         self.send_command(f'PRIVMSG #{channel} :{text}')
@@ -172,7 +172,7 @@ class Bot:
         AutoCatch = config.AutoCatch
         CatchEmote = config.CatchEmote
         #if message.user == master:
-           # print(f'> {message}')
+            #print(f'> {message}')
         # Filter Messanges and throws Balls according to pokemon.py file
         if message.user == master and message.text is not None:
             if 'Catch it using !pokecatch' in message.text: 
@@ -227,9 +227,11 @@ class Bot:
             #Try to throw after Purchase   
             elif f'@{UserLow} ''Purchase successful!' == message.text:
                 if BuyBall != 'Pokeball':
+                    print(f'Bought {HowMany} {BuyBall}s!')
                     wait_random_time()
                     self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
                 elif BuyBall == 'Pokeball':
+                    print(f'Bought {HowMany} {BuyBall}s!')
                     wait_random_time()
                     self.send_privmsg(message.channel, CatchEmote)
                           
@@ -273,10 +275,10 @@ class Bot:
             for received_msg in received_msgs.split('\r\n'):
                 self.handle_message(received_msg)
             
-        
+       
 def main():
     bot = Bot()
     bot.init()
-    
+  
 if __name__ == '__main__':
     main()
