@@ -8,11 +8,11 @@ import time
 from turtle import home
 import pokemon
 import balls
+import re
 from collections import namedtuple
-from config import HowMany, timeframes
+from config import HowMany, timeframes, AutoCatch
 import config
-
-AutoCatch = config.AutoCatch
+import os
 
 
 # Watch if its time to Start with a randome leeway.
@@ -50,6 +50,31 @@ def wait_if_not_in_timeframe(timeframes):
         # Sleep for the calculated time
         time.sleep(wait_time)
 
+def calculate_average_income(file_path='balance_history.json'):
+    # Load balance history file
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            balance_history = json.load(file)
+    else:
+        return None  # File doesn't exist, return None
+
+    # Calculate average income
+    if len(balance_history) < 2:
+        return None  # Not enough data to calculate average
+
+    total_income = 0
+    for i in range(1, len(balance_history)):
+        balance_diff = balance_history[i]['balance'] - balance_history[i - 1]['balance']
+        time_diff = (datetime.strptime(balance_history[i]['timestamp'], '%Y-%m-%d %H:%M:%S') -
+                     datetime.strptime(balance_history[i - 1]['timestamp'], '%Y-%m-%d %H:%M:%S')).total_seconds() / 3600
+
+        # Avoid division by zero
+        if time_diff != 0:
+            hourly_income = balance_diff / time_diff
+            total_income += hourly_income
+
+    average_income = total_income / (len(balance_history) - 1)
+    return average_income
 
 Message = namedtuple(
     "Message",
@@ -72,11 +97,9 @@ def wait_random_time():
 
 
 class Bot:
-    wait_if_not_in_timeframe(timeframes)
-
     def __init__(self):
-        self.irc_server = "irc.chat.twitch.tv"
-        self.irc_port = 6697
+        self.irc_server = config.irc_server
+        self.irc_port = config.irc_port
         self.oauth_token = config.OAUTH_TOKEN
         self.username = config.Username
         self.channels = config.Channels
@@ -85,6 +108,9 @@ class Bot:
 
     def init(self):
         self.connect()
+
+    #def init(self):
+        #self.connect()
 
     def send_privmsg(self, channel, text):
         self.send_command(f"PRIVMSG #{channel} :{text}")
@@ -165,10 +191,25 @@ class Bot:
         )
         return message
 
+    def CalculateTimeNeed(self, NeededMoney, Balance, Income):
+        hours_needed = (NeededMoney - Balance) / Income
+        self.time_needed = datetime.datetime.now() + datetime.timedelta(hours=hours_needed)
+        self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
+        self.formatted_time = self.time_needed.strftime('%H:%M')
+        print(
+            f'I have {Balance}. I need {NeededMoney} My income is {Income}'
+            )
+        print(
+            f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
+            )
+        return self.time_needed, self.Calculatet_Time, self.formatted_time
+
     def handle_message(self, received_msg):
         wait_if_not_in_timeframe(timeframes)
         if len(received_msg) == 0:
             return
+        if not hasattr(self, 'Calculatet_Time'):
+            self.Calculatet_Time = True
         master = config.Pokemonbot.lower()
         message = self.parse_message(received_msg)
         trainer = self.username
@@ -176,123 +217,143 @@ class Bot:
         HowMany = config.HowMany
         UserLow = config.Username.lower()
         Emote = config.Emote
-        AutoCatch = config.AutoCatch
         CatchEmote = config.CatchEmote
-        # if message.user == master:
-        # print(f'> {message}')
+        #if message.user == master:
+            #print(f'> {message}')
         # Filter Messanges and throws Balls according to pokemon.py file
         if message.user == master and message.text is not None:
-            if "Catch it using !pokecatch" in message.text:
-                if config.AutoCatch:
-                    for word in pokemon.LIST:
-                        word_parts = word.split(":")
-                        if word_parts[0] in message.text:
-                            print(f"Its a {word_parts[0]}!")
-                            # Compare Thrown Balls to list an Print
-                            if word_parts[1] == "True":
-                                if word_parts[2] not in balls.BALLS:
-                                    if config.AutoBall:
-                                        word_parts[2] = "Pokeball"
-                                        wait_random_time()
-                                        self.send_privmsg(message.channel, CatchEmote)
-                                        print(f"Throw {word_parts[2]}!")
-                                        Ball = word_parts[2]
-                                        break
-                                else:  # Timerball and Quickball logic
-                                    if word_parts[2] in balls.BALLS:
-                                        if word_parts[2] == "Quickball":
-                                            print(
-                                                """You don't know how fast i really am! Quickball!"""
-                                            )
-                                            self.send_privmsg(
-                                                message.channel,
-                                                f"{CatchEmote} {word_parts[2]}",
-                                            )
-                                        elif word_parts[2] == "Timerball":
-                                            print("Its a Timerball. Slowpoke time!")
-                                            time.sleep(75)
-                                            self.send_privmsg(
-                                                message.channel,
-                                                f"{CatchEmote} {word_parts[2]}",
-                                            )
-                                        else:
+            if 'Catch it using !pokecatch' in message.text: 
+                if AutoCatch:
+                    if self.Calculatet_Time:
+                        for word in pokemon.LIST:
+                            word_parts = word.split(':')
+                            if word_parts[0] in message.text:
+                                print(f"Its a {word_parts[0]}!")
+                                #Compare Thrown Balls to list an Print
+                                if word_parts[1] == 'True':
+                                    if word_parts[2] not in balls.BALLS:
+                                        if config.AutoBall:
+                                            word_parts[2] = 'Pokeball'
                                             wait_random_time()
-                                            self.send_privmsg(
-                                                message.channel,
-                                                f"{CatchEmote} {word_parts[2]}",
-                                            )
-                                            print(f"Throw {word_parts[2]}!")
-                                            if (
-                                                word_parts[2] != "Greatball"
-                                                or "Pokeball"
-                                                or "Ultraball"
-                                            ):
-                                                None
+                                            self.send_privmsg(message.channel, CatchEmote)
+                                            print(f'Throw {word_parts[2]}!')
+                                            Ball = word_parts[2]
+                                            break
+                                        else:
+                                            print(
+                                                'No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.'
+                                                )
+                                            self.send_privmsg(message.channel, Emote)
+                                    else: #Timerball and Quickball logic
+                                        if word_parts[2] in balls.BALLS:
+                                            if word_parts[2] == 'Quickball':
+                                                print("Quickball! Throw Fast!")
+                                                self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
+                                            elif word_parts[2] == 'Timerball':
+                                                print('Its a Timerball. Slowpoke time!')
+                                                time.sleep(80)
+                                                self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                             else:
-                                                Ball = word_parts[2]
-                                                break
-                            else:  # Sends emote if Pokemon sould not be catched.
-                                print(
-                                    f"A {word_parts[0]}... Ill Pass on that! Send Emote!"
-                                )
-                                wait_random_time()
-                                self.send_privmsg(message.channel, Emote)
-                else:  # Just sends emotes if Autocatch is off.
-                    print(
-                        "Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume."
-                    )
+                                                wait_random_time()
+                                                self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
+                                                print(f'Throw {word_parts[2]}!')
+                                                if (
+                                                    word_parts[2] != 'Greatball' 
+                                                    or 'Pokeball' 
+                                                    or 'Ultraball'
+                                                ):  
+                                                    Ball = word_parts[2]
+                                                    break
+                                else:#Sends emote if Pokemon sould not be catched.
+                                    print (f'A {word_parts[0]}... Ill Pass on that! Send Emote!')
+                                    random_time = random.randint(50, 70)
+                                    time.sleep(random_time)
+                                    self.send_privmsg(message.channel, Emote)
+                    else:   #Just sends emotes if it dosent have money to buy balls
+                        print(
+                            f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
+                            )
+                        self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
+                        random_time = random.randint(50, 70) 
+                        wait_random_time()
+                        self.send_privmsg(message.channel, Emote)                
+                else:   #Just sends emotes if Autocatch is off.
+                        print(
+                            'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
+                            ) 
+                        random_time = random.randint(50, 70) 
+                        wait_random_time()
+                        self.send_privmsg(message.channel, Emote)
+                         
+                 
+            #Try to buy balls  
+            elif '''You don't own that ball. Check the extension to see your items''' in message.text:
+                if f'@{UserLow}' in message.text:
                     wait_random_time()
-                    self.send_privmsg(message.channel, Emote)
-
-            # Try to buy balls
-            elif (
-                f"@{UserLow} "
-                """You don't own that ball. Check the extension to see your items"""
-                == message.text
-            ):
-                wait_random_time()
-                self.send_privmsg(message.channel, f"!pokeshop {BuyBall} {HowMany}")
-                print(f"Try to buy {BuyBall}!")
-
-            # Try to throw after Purchase
-            elif f"@{UserLow} " "Purchase successful!" == message.text:
-                if BuyBall != "Pokeball":
+                    self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
+                    print(f'Try to buy {BuyBall}!')
+            
+            #Try to throw after Purchase   
+            elif f'@{UserLow} ''Purchase successful!' == message.text:
+                if BuyBall != 'Pokeball':
+                    print(f'Bought {HowMany} {BuyBall}s!')
                     wait_random_time()
-                    self.send_privmsg(message.channel, f"{CatchEmote} {BuyBall}")
-                elif BuyBall == "Pokeball":
+                    self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
+                    print(f'Throw {BuyBall}!')
+                elif BuyBall == 'Pokeball':
+                    print(f'Bought {HowMany} {BuyBall}s!')
                     wait_random_time()
                     self.send_privmsg(message.channel, CatchEmote)
-
-            # Look for failed purachase
-            elif "You cant buy that item." in message.text:
-                if f"@{UserLow}" in message.text:
-                    print(f"Could not buy {BuyBall}s! Dont catch anymore!")
-                    config.AutoCatch = False
-
-            # Check if catched
-            elif "has been caught by" in message.text:
-                if AutoCatch:
-                    if UserLow in message.text:
-                        print("Catched it! =D")
-                    else:
-                        print("No luck =(")
-            elif "No one caught it." in message.text:
-                if AutoCatch:
-                    print("No luck =(")
+                    print(f'Throw {BuyBall}!')
+                          
+            #Look for failed purachase               
+            elif '''You don't have enough''' in message.text:
+                if f'@{UserLow}' in message.text:
+                    match = re.search(r'\D*(\d+)', message.text)
+                    if match:
+                        self.NeededMoney = int(match.group(1))
+                        print(f'You need {int(match.group(1))} Pokedollers!')
+                        wait_random_time()
+                        self.send_privmsg(message.channel, '!pokepass')
+                        print('Get Balance')
+            #Check if catched       
+            elif 'has been caught by:' in message.text:
+                if AutoCatch == True:
+                    if self.Calculatet_Time:
+                        if UserLow in message.text:
+                            print('Catched it! =D')
+                        else:
+                            print('No luck =(')
+            elif 'No one caught it.' in message.text:
+                if AutoCatch == True:
+                    if self.Calculatet_Time:
+                        print('No luck =(')
+            
+            #Gets the Balance and starts Calculation
+            elif 'Balance' in message.text:
+                if UserLow in message.text:
+                    match = re.search(r'\$(\d+)', message.text)
+                    if match:
+                        self.Income = config.Income 
+                        self.Balance = int(match.group(1))
+                        print(f'Your balance is {int(match.group(1))}')
+                        self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)
 
         # Ping Pong with Twitch
         if message.irc_command == "PING":
             self.send_command("PONG :tmi.twitch.tv")
             # print('Ping Pong Twitch')
 
-        # Resume Autocatch with Codeword
+        #Resume Autocatch with Codeword
         if message.user == UserLow and message.text is not None:
             if config.CodewordStart in message.text:
-                config.AutoCatch = True
-                print("Resume Autocatch")
+                self.AutoCatch = True
+                print('Resume Autocatch')
             if config.CodewordStop in message.text:
-                config.AutoCatch = False
-
+                self.AutoCatch = False
+                print('Stop Autocatch')
+                     
+    
     def loop_for_messages(self):
         while True:
             received_msgs = self.irc.recv(2048).decode()

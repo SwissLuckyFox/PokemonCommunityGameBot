@@ -6,6 +6,9 @@ Username = ""
 Channels = ['deemonrider',]
 #User The bot should Listen to.
 Pokemonbot = 'pokemoncommunitygame'
+#IRC Server Connection
+irc_server = 'irc.chat.twitch.tv'
+irc_port = 6697
 #Auto Catcher switch (True/Fals)
 AutoCatch = True
 #use Pokeballs if no ball is spesified (True/False)
@@ -15,16 +18,18 @@ BallToBuy = 'Pokeball'
 HowMany = 10
 #Codeword to Resume. Make shure the bot dosent type it itself! Dont use deemon emotes.
 CodewordStop = 'Banana'
-CodewordStart = 'Bananas'
+CodewordStart = 'Apple'
 #Message or Emote it sends to Collect Coins
 Emote = 'deemon8Hype'
 #Command or Emote to use to throw balls
 CatchEmote = 'deemon8Catch'
+#Your money income per Houer
+Income = 800
 
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {
-        "start": "06:00",
+        "start": "07:00",
         "end": "23:30",
         "random_interval": {
             "min": 15,
@@ -48,7 +53,7 @@ timeframes = {
         }
     },
     "Thursday": {
-        "start": "07:30",
+        "start": "07:00",
         "end": "23:30",
         "random_interval": {
             "min": 15,
