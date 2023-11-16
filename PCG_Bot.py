@@ -14,7 +14,8 @@ from config import HowMany, timeframes, AutoCatch
 import config
 import os
 
-#Watch if its time to Start with a randome leeway.
+
+# Watch if its time to Start with a randome leeway.
 def wait_if_not_in_timeframe(timeframes):
     # Get current day and time
     now = datetime.datetime.now()
@@ -26,7 +27,7 @@ def wait_if_not_in_timeframe(timeframes):
     end_time = timeframes[current_day]["end"]
 
     # If current time is not in the timeframe, wait
-    if not(start_time <= current_time <= end_time):
+    if not (start_time <= current_time <= end_time):
         # Calculate time difference in seconds
         start_time_obj = datetime.datetime.strptime(start_time, "%H:%M")
         current_time_obj = datetime.datetime.strptime(current_time, "%H:%M")
@@ -35,12 +36,16 @@ def wait_if_not_in_timeframe(timeframes):
         # Generate a random interval within the given min and max
         random_interval_min = timeframes[current_day]["random_interval"]["min"]
         random_interval_max = timeframes[current_day]["random_interval"]["max"]
-        random_interval = random.randint(random_interval_min, random_interval_max) * 60  # convert to seconds
+        random_interval = (
+            random.randint(random_interval_min, random_interval_max) * 60
+        )  # convert to seconds
 
         # Add the random interval to the time difference
         wait_time = time_diff + random_interval
 
-        print(f"Still Seeping for {wait_time/60} minutes. Will start again at {(now + datetime.timedelta(seconds=wait_time)).strftime('%H:%M')}.")
+        print(
+            f"Still Seeping for {wait_time/60} minutes. Will start again at {(now + datetime.timedelta(seconds=wait_time)).strftime('%H:%M')}."
+        )
 
         # Sleep for the calculated time
         time.sleep(wait_time)
@@ -72,22 +77,25 @@ def calculate_average_income(file_path='balance_history.json'):
     return average_income
 
 Message = namedtuple(
-    'Message',
-    'prefix user channel irc_command irc_args text text_command text_args',
+    "Message",
+    "prefix user channel irc_command irc_args text text_command text_args",
 )
 
 
 def remove_prefix(string, prefix):
     if not string.startswith(prefix):
         return string
-    return string[len(prefix):]
+    return string[len(prefix) :]
 
-    #Randome Time
+    # Randome Time
+
+
 def wait_random_time():
     # Generate a random number in secounds
     random_time = random.randint(5, 10)
     time.sleep(random_time)
-     
+
+
 class Bot:
     def __init__(self):
         self.irc_server = config.irc_server
@@ -96,43 +104,45 @@ class Bot:
         self.username = config.Username
         self.channels = config.Channels
         self.PokeBot = config.Pokemonbot.lower()
-        self.command_prefix = '@'
+        self.command_prefix = "@"
+
+    def init(self):
         self.connect()
 
     #def init(self):
         #self.connect()
 
     def send_privmsg(self, channel, text):
-        self.send_command(f'PRIVMSG #{channel} :{text}')
+        self.send_command(f"PRIVMSG #{channel} :{text}")
 
     def send_command(self, command):
-        self.irc.send((command + '\r\n').encode())
-        #if 'PASS' not in command:
-            #print(f'< {command}')
-        
-        
+        self.irc.send((command + "\r\n").encode())
+        # if 'PASS' not in command:
+        # print(f'< {command}')
+
     def connect(self):
         self.irc = ssl.wrap_socket(socket.socket())
         self.irc.connect((self.irc_server, self.irc_port))
-        self.send_command(f'PASS {self.oauth_token}')
-        self.send_command(f'NICK {self.username}')
+        self.send_command(f"PASS {self.oauth_token}")
+        self.send_command(f"NICK {self.username}")
         for channel in self.channels:
-            self.send_command(f'JOIN #{channel}')
-            print (f'Go to {channel}`s Safarizone with {self.username}. Lets Catch some Pokemon!')
+            self.send_command(f"JOIN #{channel}")
+            print(
+                f"Go to {channel}`s Safarizone with {self.username}. Lets Catch some Pokemon!"
+            )
         self.loop_for_messages()
-        
 
     def get_user_from_prefix(self, prefix):
-        domain = prefix.split('!')[0]
-        if domain.endswith('.tmi.twitch.tv'):
-            return domain.replace('.tmi.twitch.tv', '')
-        if 'tmi.twitch.tv' not in domain:
+        domain = prefix.split("!")[0]
+        if domain.endswith(".tmi.twitch.tv"):
+            return domain.replace(".tmi.twitch.tv", "")
+        if "tmi.twitch.tv" not in domain:
             return domain
         return None
-    
-    #Splitting Message into parts to Filter it more easely
+
+    # Splitting Message into parts to Filter it more easely
     def parse_message(self, received_msg):
-        parts = received_msg.split(' ')
+        parts = received_msg.split(" ")
 
         prefix = None
         user = None
@@ -143,19 +153,18 @@ class Bot:
         irc_command = None
         irc_args = None
 
-        if parts[0].startswith(':'):
-            prefix = remove_prefix(parts[0], ':')
+        if parts[0].startswith(":"):
+            prefix = remove_prefix(parts[0], ":")
             user = self.get_user_from_prefix(prefix)
             parts = parts[1:]
 
         text_start = next(
-            (idx for idx, part in enumerate(parts) if part.startswith(':')),
-            None
+            (idx for idx, part in enumerate(parts) if part.startswith(":")), None
         )
         if text_start is not None:
             text_parts = parts[text_start:]
             text_parts[0] = text_parts[0][1:]
-            text = ' '.join(text_parts)
+            text = " ".join(text_parts)
             if text_parts[0].startswith(self.command_prefix):
                 text_command = remove_prefix(text_parts[0], self.command_prefix)
                 text_args = text_parts[1:]
@@ -165,8 +174,7 @@ class Bot:
         irc_args = parts[1:]
 
         hash_start = next(
-            (idx for idx, part in enumerate(irc_args) if part.startswith('#')),
-            None
+            (idx for idx, part in enumerate(irc_args) if part.startswith("#")), None
         )
         if hash_start is not None:
             channel = irc_args[hash_start][1:]
@@ -188,8 +196,12 @@ class Bot:
         self.time_needed = datetime.datetime.now() + datetime.timedelta(hours=hours_needed)
         self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
         self.formatted_time = self.time_needed.strftime('%H:%M')
-        print(f'I have {Balance}. I need {NeededMoney} My income is {Income}')
-        print(f'Will not catch until {self.formatted_time}. Need Money to buy Balls')
+        print(
+            f'I have {Balance}. I need {NeededMoney} My income is {Income}'
+            )
+        print(
+            f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
+            )
         return self.time_needed, self.Calculatet_Time, self.formatted_time
 
     def handle_message(self, received_msg):
@@ -228,12 +240,14 @@ class Bot:
                                             Ball = word_parts[2]
                                             break
                                         else:
-                                            print('No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.')
+                                            print(
+                                                'No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.'
+                                                )
                                             self.send_privmsg(message.channel, Emote)
                                     else: #Timerball and Quickball logic
                                         if word_parts[2] in balls.BALLS:
                                             if word_parts[2] == 'Quickball':
-                                                print('''You don't know how fast i really am! Quickball!''')
+                                                print("Quickball! Throw Fast!")
                                                 self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                             elif word_parts[2] == 'Timerball':
                                                 print('Its a Timerball. Slowpoke time!')
@@ -243,7 +257,11 @@ class Bot:
                                                 wait_random_time()
                                                 self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                 print(f'Throw {word_parts[2]}!')
-                                                if word_parts[2] != 'Greatball' or 'Pokeball' or 'Ultraball':  
+                                                if (
+                                                    word_parts[2] != 'Greatball' 
+                                                    or 'Pokeball' 
+                                                    or 'Ultraball'
+                                                ):  
                                                     Ball = word_parts[2]
                                                     break
                                 else:#Sends emote if Pokemon sould not be catched.
@@ -252,13 +270,17 @@ class Bot:
                                     time.sleep(random_time)
                                     self.send_privmsg(message.channel, Emote)
                     else:   #Just sends emotes if it dosent have money to buy balls
-                        print(f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.')
+                        print(
+                            f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
+                            )
                         self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
                         random_time = random.randint(50, 70) 
                         wait_random_time()
                         self.send_privmsg(message.channel, Emote)                
                 else:   #Just sends emotes if Autocatch is off.
-                        print('Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.') 
+                        print(
+                            'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
+                            ) 
                         random_time = random.randint(50, 70) 
                         wait_random_time()
                         self.send_privmsg(message.channel, Emote)
@@ -317,10 +339,10 @@ class Bot:
                         print(f'Your balance is {int(match.group(1))}')
                         self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)
 
-        #Ping Pong with Twitch
-        if message.irc_command == 'PING':
-            self.send_command('PONG :tmi.twitch.tv')
-            #print('Ping Pong Twitch')
+        # Ping Pong with Twitch
+        if message.irc_command == "PING":
+            self.send_command("PONG :tmi.twitch.tv")
+            # print('Ping Pong Twitch')
 
         #Resume Autocatch with Codeword
         if message.user == UserLow and message.text is not None:
@@ -335,13 +357,14 @@ class Bot:
     def loop_for_messages(self):
         while True:
             received_msgs = self.irc.recv(2048).decode()
-            for received_msg in received_msgs.split('\r\n'):
+            for received_msg in received_msgs.split("\r\n"):
                 self.handle_message(received_msg)
-            
-       
+
+
 def main():
     bot = Bot()
     bot.init()
-  
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     main()
