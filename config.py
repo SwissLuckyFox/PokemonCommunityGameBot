@@ -25,7 +25,9 @@ Emote = 'deemon8Hype'
 CatchEmote = 'deemon8Catch'
 #Your money income per Houer
 Income = 800
-
+#The timeframe used to randomise the throws (in secounds)
+RandomeFrom = 5
+RandomeTo = 10
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {

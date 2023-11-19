@@ -10,7 +10,7 @@ import pokemon
 import balls
 import re
 from collections import namedtuple
-from config import HowMany, timeframes, AutoCatch
+from config import HowMany, timeframes, AutoCatch, RandomeFrom, RandomeTo
 import config
 import os
 
@@ -67,7 +67,8 @@ def remove_prefix(string, prefix):
   
 # Generate a random number in secounds
 def wait_random_time():
-    random_time = random.randint(5, 10)
+    random_time = random.randint(config.RandomeFrom, config.RandomeTo)
+    print(random_time)
     time.sleep(random_time)
 
 class Bot:
@@ -92,6 +93,7 @@ class Bot:
         # print(f'< {command}')
 
     def connect(self):
+        wait_random_time()
         self.irc = ssl.wrap_socket(socket.socket())
         self.irc.connect((self.irc_server, self.irc_port))
         self.send_command(f"PASS {self.oauth_token}")
