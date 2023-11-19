@@ -3,8 +3,8 @@ A Small Bot for Twitch PCG Chat game.
 
 Its my first dip into programming. I use it to learn it a little becouse i need somting useful to be motivaded.
 
-The bot efficiently manages fundamental chat tasks and is capable of continuous operation, functioning 24/7. 
-To set it up, simply provide your OAuth token and username; with these details, the bot is ready to go. 
+The bot manages fundamental chat tasks and is capable of functioning 24/7. 
+To set it up, simply provide your OAuth token and username. With these details, the bot is ready to go. 
 While you have the option to change the channel, using the default channel is recommended as it is consistently online.
 
 
