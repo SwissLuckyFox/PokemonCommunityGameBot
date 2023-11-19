@@ -21,11 +21,10 @@ Timeframes:
 Autocatch:
 
   It automaticly sends the preferred message to catch. It can be chanced in the config.
-  Reads the spawned pokemon and compares it to the pokemon table to see if it should be catched or not
-  I it will be catched or not or wich ball it sould use can be configeret in the pokemon file.
+  Reads the spawned pokemon and compares it to the pokemon table to see if it should be catched or not. 
+  It checks the pokemon file and uses the configeret Ball. If no ball is set, it uses Pokeballs. This can be turned off.
   Respects Timer and Fastballs and throws them accordingly.
-  If no ball is set it uses Pokeballs. This can be turned off.
-  Also got a randome time to it just to not throw it the same every time.
+  Also adds a randome time to it just to not throw it exactly the same every time.
 
 
 Auto Purchase:
