@@ -1,6 +1,7 @@
 # PokemonCommunityGameBot
-A Small Bot for Twitch PCG
-Its my first try on programming. I use it to learn it a little becouse i need somting useful to be motivaded
+A Small Bot for Twitch PCG Chat game.
+
+Its my first try on programming. I use it to learn it a little becouse i need somting useful to be motivaded.
 
 The bot efficiently manages fundamental chat tasks and is capable of continuous operation, functioning 24/7. 
 To set it up, simply provide your OAuth token and username; with these details, the bot is ready to go. 
