@@ -93,7 +93,6 @@ class Bot:
         # print(f'< {command}')
 
     def connect(self):
-        wait_random_time()
         self.irc = ssl.wrap_socket(socket.socket())
         self.irc.connect((self.irc_server, self.irc_port))
         self.send_command(f"PASS {self.oauth_token}")
@@ -191,9 +190,9 @@ class Bot:
         UserLow = config.Username.lower()
         Emote = config.Emote
         CatchEmote = config.CatchEmote
-        if message.user == master:
-            if wait_if_not_in_timeframe(self, timeframes):
-                print(f'> {message}')
+        #if message.user == master:
+            #if wait_if_not_in_timeframe(self, timeframes):
+                #print(f'> {message}')
         # Filter Messanges and throws Balls according to pokemon.py file
         if message.user == master and message.text is not None:
             if wait_if_not_in_timeframe(self, timeframes):
