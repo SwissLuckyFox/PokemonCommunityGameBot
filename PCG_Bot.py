@@ -68,7 +68,7 @@ def remove_prefix(string, prefix):
 # Generate a random number in secounds
 def wait_random_time():
     random_time = random.randint(config.RandomeFrom, config.RandomeTo)
-    print(random_time)
+    print(f"Wait for {random_time} secounds")
     time.sleep(random_time)
 
 class Bot:
