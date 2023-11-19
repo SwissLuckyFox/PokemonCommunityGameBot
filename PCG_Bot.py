@@ -68,7 +68,7 @@ def remove_prefix(string, prefix):
 # Generate a random number in secounds
 def wait_random_time():
     random_time = random.randint(config.RandomeFrom, config.RandomeTo)
-    print(f"Wait for {random_time} secounds")
+    print(f"Wait for {random_time} secounds.")
     time.sleep(random_time)
 
 class Bot:
@@ -162,7 +162,8 @@ class Bot:
             irc_args=irc_args,
         )
         return message
-
+    
+        #Calculate the time it needs to get the desired balance
     def CalculateTimeNeed(self, NeededMoney, Balance, Income,):
         hours_needed = (NeededMoney - Balance) / Income
         self.time_needed = datetime.datetime.now() + datetime.timedelta(hours=hours_needed)
@@ -231,18 +232,12 @@ class Bot:
                                                     wait_random_time()
                                                     self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                     print(f'Throw {word_parts[2]}!')
-                                                    if (
-                                                        word_parts[2] != 'Greatball' 
-                                                        or 'Pokeball' 
-                                                        or 'Ultraball'
-                                                    ):  
-                                                        Ball = word_parts[2]
-                                                        break
                                     else:#Sends emote if Pokemon sould not be catched.
                                         print (f'A {word_parts[0]}... Ill Pass on that! Send Emote!')
                                         random_time = random.randint(50, 70)
                                         time.sleep(random_time)
                                         self.send_privmsg(message.channel, Emote)
+                                        print(f"Send {Emote} to collect money!") 
                         else:   #Just sends emotes if it dosent have money to buy balls
                             print(
                                 f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
@@ -250,14 +245,16 @@ class Bot:
                             self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
                             random_time = random.randint(50, 70) 
                             wait_random_time()
-                            self.send_privmsg(message.channel, Emote)                
+                            self.send_privmsg(message.channel, Emote)  
+                            print(f"Send {Emote} to collect money!")               
                     else:   #Just sends emotes if Autocatch is off.
                             print(
                                 'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
                                 ) 
                             random_time = random.randint(50, 70) 
                             wait_random_time()
-                            self.send_privmsg(message.channel, Emote)      
+                            self.send_privmsg(message.channel, Emote) 
+                            print(f"Send {Emote} to collect money!")     
                  
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
@@ -309,7 +306,7 @@ class Bot:
                         if match:
                             self.Income = config.Income 
                             self.Balance = int(match.group(1))
-                            print(f'Your balance is {int(match.group(1))}')
+                            #print(f'Your balance is {int(match.group(1))}')
                             self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)               
         # Ping Pong with Twitch
         if message.irc_command == "PING":
