@@ -185,13 +185,13 @@ class Bot:
         self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
         self.formatted_time = self.time_needed.strftime('%H:%M')
         print(
-            f'I have {Balance}. I need {NeededMoney} My income is {Income}'
+            f'I have {Balance}$. I need {NeededMoney}$ My income is {Income}$'
             )
         print(
             f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
             )
         self.send_Telegram_msg(
-            f'I have {Balance}. I need {NeededMoney} My income is {Income}'
+            f'I have {Balance}$. I need {NeededMoney}$ My income is {Income}$'
             )
         self.send_Telegram_msg(
             f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
@@ -261,6 +261,7 @@ class Bot:
                                                     print(f'Throw {word_parts[2]}!')
                                     else:#Sends emote if Pokemon sould not be catched.
                                         print (f'A {word_parts[0]}... Ill Pass on that! Send Emote!')
+                                        self.send_Telegram_msg(f'A {word_parts[0]}... Ill Pass on that! Send Emote!')
                                         random_time = random.randint(50, 70)
                                         time.sleep(random_time)
                                         self.send_privmsg(message.channel, Emote)
@@ -297,6 +298,8 @@ class Bot:
                     if f'@{UserLow}' in message.text:
                         wait_random_time(self)
                         self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
+                        print(f"""I dont have {BuyBall}'s!""")
+                        self.send_Telegram_msg(f"""I dont have {BuyBall}'s!""")
                         print(f'Try to buy {BuyBall}!')
                         self.send_Telegram_msg(f'Try to buy {BuyBall}!')
                 
