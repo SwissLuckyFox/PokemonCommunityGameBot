@@ -248,11 +248,11 @@ class Bot:
                                             if word_parts[2] in balls.BALLS:
                                                 if word_parts[2] == 'Quickball':
                                                     print("Quickball! Throw Fast!")
-                                                    self.send_Telegram_msg("It broke out! =(")
+                                                    self.send_Telegram_msg("Quickball! Throw Fast!")
                                                     self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                 elif word_parts[2] == 'Timerball':
                                                     print('Its a Timerball. Slowpoke time!')
-                                                    self.send_Telegram_msg("It broke out! =(")
+                                                    self.send_Telegram_msg('Its a Timerball. Slowpoke time!')
                                                     time.sleep(80)
                                                     self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                 else:
@@ -265,27 +265,32 @@ class Bot:
                                         time.sleep(random_time)
                                         self.send_privmsg(message.channel, Emote)
                                         print(f"Send {Emote} to collect money!") 
-                                        self.send_Telegram_msg("It broke out! =(")
+                                        self.send_Telegram_msg(f"Send {Emote} to collect money!")
                         else:   #Just sends emotes if it dosent have money to buy balls
                             print(
                                 f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
                                 )
-                            self.send_Telegram_msg("It broke out! =(")
+                            self.send_Telegram_msg(
+                                f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
+                                )
                             self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
                             random_time = random.randint(50, 70) 
                             wait_random_time(self)
                             self.send_privmsg(message.channel, Emote)  
                             print(f"Send {Emote} to collect money!") 
-                            self.send_Telegram_msg("It broke out! =(")              
+                            self.send_Telegram_msg(f"Send {Emote} to collect money!")              
                     else:   #Just sends emotes if Autocatch is off.
                             print(
+                                'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
+                                ) 
+                            self.send_Telegram_msg(
                                 'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
                                 ) 
                             random_time = random.randint(50, 70) 
                             wait_random_time(self)
                             self.send_privmsg(message.channel, Emote) 
                             print(f"Send {Emote} to collect money!")  
-                            self.send_Telegram_msg("It broke out! =(")   
+                            self.send_Telegram_msg(f"Send {Emote} to collect money!")   
                  
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
@@ -293,24 +298,24 @@ class Bot:
                         wait_random_time(self)
                         self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
                         print(f'Try to buy {BuyBall}!')
-                        self.send_Telegram_msg("It broke out! =(")
+                        self.send_Telegram_msg(f'Try to buy {BuyBall}!')
                 
                 #Try to throw after Purchase   
                 elif f'@{UserLow} ''Purchase successful!' == message.text:
                     if BuyBall != 'Pokeball':
                         print(f'Bought {HowMany} {BuyBall}s!')
-                        self.send_Telegram_msg("It broke out! =(")
+                        self.send_Telegram_msg(f'Bought {HowMany} {BuyBall}s!')
                         wait_random_time(self)
                         self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
                         print(f'Throw {BuyBall}!')
-                        self.send_Telegram_msg("It broke out! =(")
+                        self.send_Telegram_msg(f'Throw {BuyBall}!')
                     elif BuyBall == 'Pokeball':
                         print(f'Bought {HowMany} {BuyBall}s!')
-                        self.send_Telegram_msg("It broke out! =(")
+                        self.send_Telegram_msg(f'Bought {HowMany} {BuyBall}s!')
                         wait_random_time(self)
                         self.send_privmsg(message.channel, CatchEmote)
                         print(f'Throw {BuyBall}!')
-                        self.send_Telegram_msg("It broke out! =(")
+                        self.send_Telegram_msg(f'Throw {BuyBall}!')
                             
                 #Look for failed purachase               
                 elif '''You don't have enough''' in message.text:
