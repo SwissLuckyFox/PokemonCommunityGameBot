@@ -77,7 +77,7 @@ def remove_prefix(string, prefix):
     return string[len(prefix) :]
   
 # Generate a random number in secounds
-def wait_random_time():
+def wait_random_time(Bot):
     random_time = random.randint(config.RandomeFrom, config.RandomeTo)
     print(f"Wait for {random_time} secounds.")
     Bot.send_Telegram_msg(f"Wait for {random_time} secounds.")
@@ -231,12 +231,11 @@ class Bot:
                                         if word_parts[2] not in balls.BALLS:
                                             if config.AutoBall:
                                                 word_parts[2] = 'Pokeball'
-                                                wait_random_time()
+                                                wait_random_time(self)
                                                 self.send_privmsg(message.channel, CatchEmote)
                                                 print(f'Throw {word_parts[2]}!')
                                                 self.send_Telegram_msg(f'Throw {word_parts[2]}!')
                                                 Ball = word_parts[2]
-                                                break
                                             else:
                                                 print(
                                                     'No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.'
@@ -257,7 +256,7 @@ class Bot:
                                                     time.sleep(80)
                                                     self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                 else:
-                                                    wait_random_time()
+                                                    wait_random_time(self)
                                                     self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
                                                     print(f'Throw {word_parts[2]}!')
                                     else:#Sends emote if Pokemon sould not be catched.
@@ -274,7 +273,7 @@ class Bot:
                             self.send_Telegram_msg("It broke out! =(")
                             self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
                             random_time = random.randint(50, 70) 
-                            wait_random_time()
+                            wait_random_time(self)
                             self.send_privmsg(message.channel, Emote)  
                             print(f"Send {Emote} to collect money!") 
                             self.send_Telegram_msg("It broke out! =(")              
@@ -283,7 +282,7 @@ class Bot:
                                 'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
                                 ) 
                             random_time = random.randint(50, 70) 
-                            wait_random_time()
+                            wait_random_time(self)
                             self.send_privmsg(message.channel, Emote) 
                             print(f"Send {Emote} to collect money!")  
                             self.send_Telegram_msg("It broke out! =(")   
@@ -291,7 +290,7 @@ class Bot:
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
                     if f'@{UserLow}' in message.text:
-                        wait_random_time()
+                        wait_random_time(self)
                         self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
                         print(f'Try to buy {BuyBall}!')
                         self.send_Telegram_msg("It broke out! =(")
@@ -301,14 +300,14 @@ class Bot:
                     if BuyBall != 'Pokeball':
                         print(f'Bought {HowMany} {BuyBall}s!')
                         self.send_Telegram_msg("It broke out! =(")
-                        wait_random_time()
+                        wait_random_time(self)
                         self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
                         print(f'Throw {BuyBall}!')
                         self.send_Telegram_msg("It broke out! =(")
                     elif BuyBall == 'Pokeball':
                         print(f'Bought {HowMany} {BuyBall}s!')
                         self.send_Telegram_msg("It broke out! =(")
-                        wait_random_time()
+                        wait_random_time(self)
                         self.send_privmsg(message.channel, CatchEmote)
                         print(f'Throw {BuyBall}!')
                         self.send_Telegram_msg("It broke out! =(")
@@ -320,7 +319,7 @@ class Bot:
                         if match:
                             self.NeededMoney = int(match.group(1))
                             print(f'You need {int(match.group(1))} Pokedollers!')
-                            wait_random_time()
+                            wait_random_time(self)
                             self.send_privmsg(message.channel, '!pokepass')
                             print('Get Balance')
                             self.send_Telegram_msg("It broke out! =(")
@@ -390,9 +389,6 @@ def main():
     bot = Bot()
     bot.init()
     wait_if_not_in_timeframe(bot, timeframes)
-    bot   = telegrambot.TelegramBot(BOT_TOKEN)
-    bot.set_message_handler(on_message_receive)
-    bot.wait_for_messages()
 
 if __name__ == "__main__":
     main()

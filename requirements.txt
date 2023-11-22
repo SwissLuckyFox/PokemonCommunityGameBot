@@ -1,0 +1,2 @@
+Requests==2.31.0
+simple_telegrambot==1.0.2
