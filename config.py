@@ -3,9 +3,12 @@ OAUTH_TOKEN = ""
 #Your Username.
 Username = ""
 #What Channels to join.
-Channels = ['deemonrider',]
+Channels = ['',]
 #User The bot should Listen to.
-Pokemonbot = 'pokemoncommunitygame'
+Pokemonbot = ''
+#Telegram Bot Token
+TelegramBotToken = ""
+TelegramChatID = 123456
 #IRC Server Connection
 irc_server = 'irc.chat.twitch.tv'
 irc_port = 6697

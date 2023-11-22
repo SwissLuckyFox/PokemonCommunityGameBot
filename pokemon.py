@@ -1,8 +1,10 @@
-﻿#A list of all Pokemons. 
+﻿########################
+#A list of all Pokemons. 
 #You can edit it like so. 'PokemonName:True:BallName', 
 #If you don't want to throw your balls just chance True to False or whatever. If it's not True, it won't try to catch it. 
 #THE CAPITAL LETTER IS IMPORTENT! It won't work with "true" it needs to be "True"
 #If no ball is specified, it will throw a Pokeball if Autoball is enabled in the Config file.
+########################
 LIST = [
 ######Special Mons######
 'Unidentified Ghost:True:',
@@ -1024,5 +1026,4 @@ LIST = [
 'Munkidori:True:',
 'Fezandipiti:True:',
 'Ogerpon:True:',
-'Unidentified Ghost:True:::',
 ]
