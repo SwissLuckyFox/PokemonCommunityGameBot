@@ -10,7 +10,6 @@ import re
 from collections import namedtuple
 from config import timeframes, AutoCatch
 import config
-#from simpletelegrambot import telegrambot
 import requests
 
 def on_message_receive(bot, message):
@@ -92,7 +91,7 @@ class Bot:
         self.channels = config.Channels
         self.PokeBot = config.Pokemonbot.lower()
         self.command_prefix = "@"
-
+        self.UsedBall = config.BallToBuy
     def init(self):
         self.connect()
 
@@ -236,7 +235,7 @@ class Bot:
                                                 self.send_privmsg(message.channel, CatchEmote)
                                                 print(f'Throw {word_parts[2]}!')
                                                 self.send_Telegram_msg(f'Throw {word_parts[2]}!')
-                                                UsedBall = word_parts[2]
+                                                self.UsedBall = word_parts[2]
                                             else:
                                                 print(
                                                     'No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.'
@@ -247,7 +246,7 @@ class Bot:
                                                 self.send_privmsg(message.channel, Emote)
                                         else: #Timerball and Quickball logic
                                             if word_parts[2] in balls.BALLS:
-                                                UsedBall = word_parts[2]
+                                                self.UsedBall = word_parts[2]
                                                 if word_parts[2] == 'Quickball':
                                                     print("Quickball! Throw Fast!")
                                                     self.send_Telegram_msg("Quickball! Throw Fast!")
@@ -298,12 +297,12 @@ class Bot:
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
                     if f'@{UserLow}' in message.text:
-                        if UsedBall != BuyBall:
+                        if self.UsedBall != BuyBall:
                             if config.AutoBall:
-                                print(f"""I don't have {UsedBall}! Try to throw {BuyBall}!""")
-                                self.send_Telegram_msg(f"""I don't have {UsedBall}! Try to throw {BuyBall}!""")
+                                print(f"""I don't have {self.UsedBall}! Try to throw {BuyBall}!""")
+                                self.send_Telegram_msg(f"""I don't have {self.UsedBall}! Try to throw {BuyBall}!""")
                                 self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
-                                UsedBall = BuyBall
+                                self.UsedBall = BuyBall
                         else:        
                             wait_random_time(self)
                             self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
