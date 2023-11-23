@@ -185,16 +185,16 @@ class Bot:
         self.Calculatet_Time = datetime.datetime.now() >= self.time_needed
         self.formatted_time = self.time_needed.strftime('%H:%M')
         print(
-            f'I have {Balance}$. I need {NeededMoney}$ My income is {Income}$'
+            f'I have {Balance}$. I need {NeededMoney}$. My income is {Income}$.'
             )
         print(
-            f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
+            f'Will not catch until {self.formatted_time}. Need Money to buy Balls!'
             )
         self.send_Telegram_msg(
-            f'I have {Balance}$. I need {NeededMoney}$ My income is {Income}$'
+            f'I have {Balance}$. I need {NeededMoney}$. My income is {Income}$.'
             )
         self.send_Telegram_msg(
-            f'Will not catch until {self.formatted_time}. Need Money to buy Balls'
+            f'Will not catch until {self.formatted_time}. Need Money to buy Balls!'
             )
         return self.time_needed, self.Calculatet_Time, self.formatted_time
 
@@ -212,6 +212,7 @@ class Bot:
         UserLow = config.Username.lower()
         Emote = config.Emote
         CatchEmote = config.CatchEmote
+        AutoBall = config.AutoBall
         #if message.user == master:
             #if wait_if_not_in_timeframe(self, timeframes):
                 #print(f'> {message}')
@@ -229,13 +230,13 @@ class Bot:
                                     #Compare Thrown Balls to list an Print
                                     if word_parts[1] == 'True':
                                         if word_parts[2] not in balls.BALLS:
-                                            if config.AutoBall:
-                                                word_parts[2] = 'Pokeball'
+                                            if AutoBall:
+                                                word_parts[2] = BuyBall
                                                 wait_random_time(self)
                                                 self.send_privmsg(message.channel, CatchEmote)
                                                 print(f'Throw {word_parts[2]}!')
                                                 self.send_Telegram_msg(f'Throw {word_parts[2]}!')
-                                                Ball = word_parts[2]
+                                                UsedBall = word_parts[2]
                                             else:
                                                 print(
                                                     'No Ball was defined in the Config and Autoball is off. Just send a Emote to collect money.'
@@ -246,6 +247,7 @@ class Bot:
                                                 self.send_privmsg(message.channel, Emote)
                                         else: #Timerball and Quickball logic
                                             if word_parts[2] in balls.BALLS:
+                                                UsedBall = word_parts[2]
                                                 if word_parts[2] == 'Quickball':
                                                     print("Quickball! Throw Fast!")
                                                     self.send_Telegram_msg("Quickball! Throw Fast!")
@@ -296,12 +298,19 @@ class Bot:
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
                     if f'@{UserLow}' in message.text:
-                        wait_random_time(self)
-                        self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
-                        print(f"""I dont have {BuyBall}'s!""")
-                        self.send_Telegram_msg(f"""I dont have {BuyBall}'s!""")
-                        print(f'Try to buy {BuyBall}!')
-                        self.send_Telegram_msg(f'Try to buy {BuyBall}!')
+                        if UsedBall != BuyBall:
+                            if config.AutoBall:
+                                print(f"""I don't have {UsedBall}! Try to throw {BuyBall}!""")
+                                self.send_Telegram_msg(f"""I don't have {UsedBall}! Try to throw {BuyBall}!""")
+                                self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
+                                UsedBall = BuyBall
+                        else:        
+                            wait_random_time(self)
+                            self.send_privmsg(message.channel, f'!pokeshop {BuyBall} {HowMany}')
+                            print(f"""I dont have {BuyBall}'s!""")
+                            self.send_Telegram_msg(f"""I dont have {BuyBall}'s!""")
+                            print(f'Try to buy {BuyBall}!')
+                            self.send_Telegram_msg(f'Try to buy {BuyBall}!')
                 
                 #Try to throw after Purchase   
                 elif f'@{UserLow} ''Purchase successful!' == message.text:
@@ -334,18 +343,16 @@ class Bot:
                 #Check if catched       
                 elif 'has been caught by:' in message.text:
                     if AutoCatch == True:
-                        if self.Calculatet_Time:
-                            if UserLow in message.text:
-                                print('Catched it! =D')
-                                self.send_Telegram_msg("Catched it! =D")
-                            else:
-                                print('It broke out! =(')
-                                self.send_Telegram_msg("It broke out! =(")
-                elif 'No one caught it.' in message.text:
-                    if AutoCatch == True:
-                        if self.Calculatet_Time:
+                        if UserLow in message.text:
+                            print('Catched it! =D')
+                            self.send_Telegram_msg("Catched it! =D")
+                        else:
                             print('It broke out! =(')
                             self.send_Telegram_msg("It broke out! =(")
+                elif 'No one caught it.' in message.text:
+                    if AutoCatch == True:
+                        print('It broke out! =(')
+                        self.send_Telegram_msg("It broke out! =(")
                 
                 #Gets the Balance and starts Calculation
                 elif 'Balance' in message.text:
