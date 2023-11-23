@@ -22,7 +22,7 @@ def on_message_receive(bot, message):
     print(msg_time, msg_text)
 
     # Watch if its time to Start with a randome leeway.      
-def wait_if_not_in_timeframe(bot, timeframes):
+def wait_if_not_in_timeframe(self, timeframes):
     # Get current day and time
     now = datetime.datetime.now()
     current_day = now.strftime("%A")
@@ -53,12 +53,12 @@ def wait_if_not_in_timeframe(bot, timeframes):
         print(
             f"Still Seeping for {wait_time_Format} minutes. Will start again at {wait_date}."
             )
-        Bot.send_Telegram_msg(
+        self.send_Telegram_msg(
             f"Still Seeping for {wait_time_Format} minutes. Will start again at {wait_date}."
             )
         time.sleep(wait_time)
         print(f"Ring! Riing! Sleeptime is over!")
-        Bot.send_Telegram_msg(f"Ring! Riing! Sleeptime is over!")
+        self.send_Telegram_msg(f"Ring! Riing! Sleeptime is over!")
         bot.connect()
         
         return False
