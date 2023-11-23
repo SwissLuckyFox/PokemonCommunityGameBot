@@ -10,7 +10,7 @@ import re
 from collections import namedtuple
 from config import timeframes, AutoCatch
 import config
-from simpletelegrambot import telegrambot
+#from simpletelegrambot import telegrambot
 import requests
 
 def on_message_receive(bot, message):
@@ -59,7 +59,7 @@ def wait_if_not_in_timeframe(self, timeframes):
         time.sleep(wait_time)
         print(f"Ring! Riing! Sleeptime is over!")
         self.send_Telegram_msg(f"Ring! Riing! Sleeptime is over!")
-        bot.connect()
+        self.connect()
         
         return False
         # Sleep for the calculated time
