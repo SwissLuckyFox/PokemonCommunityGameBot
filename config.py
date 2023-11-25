@@ -8,7 +8,7 @@ Channels = ['',]
 Pokemonbot = ''
 #Telegram Bot Token
 TelegramBotToken = ""
-TelegramChatID = 123456
+TelegramChatID = 123456789
 #IRC Server Connection
 irc_server = 'irc.chat.twitch.tv'
 irc_port = 6697
@@ -31,6 +31,8 @@ Income = 800
 #The timeframe used to randomise the throws (in secounds)
 RandomeFrom = 5
 RandomeTo = 10
+#Shows randome time in Messages True/False
+ShowRandomeTime = True
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {
