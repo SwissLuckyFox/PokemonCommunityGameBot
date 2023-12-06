@@ -33,6 +33,8 @@ RandomeFrom = 5
 RandomeTo = 10
 #Shows randome time in Messages True/False
 ShowRandomeTime = True
+#Randome miss chance in %. For example if you set it to 20 it misses 20% of the catch messages. It wont send an emote as well.
+MissPercentage = 50
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {
