@@ -26,15 +26,17 @@ CodewordStart = 'Apple'
 Emote = 'deemon8Hype'
 #Command or Emote to use to throw balls
 CatchEmote = 'deemon8Catch'
-#Your money income per Houer
+#Your money income per Houer, 800 is just a guess by me.
 Income = 800
 #The timeframe used to randomise the throws (in secounds)
 RandomeFrom = 5
 RandomeTo = 10
+#How long it waits for a Timerball
+TimerBallTime = 85
 #Shows randome time in Messages True/False
 ShowRandomeTime = True
 #Randome miss chance in %. For example if you set it to 20 it misses 20% of the catch messages. It wont send an emote as well.
-MissPercentage = 50
+MissPercentage = 5
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {
