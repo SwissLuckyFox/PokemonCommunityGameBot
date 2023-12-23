@@ -94,6 +94,9 @@ class Bot:
         self.PokeBot = config.Pokemonbot.lower()
         self.command_prefix = "@"
         self.UsedBall = config.BallToBuy
+        self.time_needed = datetime.datetime.now()
+
+
     def init(self):
         self.connect()
 
@@ -106,19 +109,24 @@ class Bot:
         # print(f'< {command}')
 
     def connect(self):
-        self.irc = ssl.wrap_socket(socket.socket())
-        self.irc.connect((self.irc_server, self.irc_port))
-        self.send_command(f"PASS {self.oauth_token}")
-        self.send_command(f"NICK {self.username}")
-        for channel in self.channels:
-            self.send_command(f"JOIN #{channel}")
-            print(
-                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-            )
-            self.send_Telegram_msg(
-                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-            )
-        self.loop_for_messages()
+        while True:
+                    try:
+                        self.irc = ssl.wrap_socket(socket.socket())
+                        self.irc.connect((self.irc_server, self.irc_port))
+                        self.send_command(f"PASS {self.oauth_token}")
+                        self.send_command(f"NICK {self.username}")
+                        for channel in self.channels:
+                            self.send_command(f"JOIN #{channel}")
+                            print(
+                                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
+                            )
+                            self.send_Telegram_msg(
+                                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
+                            )
+                        self.loop_for_messages()
+                    except (OSError, socket.error, ssl.SSLError) as e:
+                        print(f"Error during connection: {e}")
+                        time.sleep(10)  # Wait for 10 seconds before retrying
         
     def get_user_from_prefix(self, prefix):
         domain = prefix.split("!")[0]
@@ -213,6 +221,8 @@ class Bot:
             return
         if not hasattr(self, 'Calculatet_Time'):
             self.Calculatet_Time = True
+        if not hasattr(self, 'time_needed'):
+            self.time_needed = datetime.datetime.now()
         master = config.Pokemonbot.lower()
         message = self.parse_message(received_msg)
         #print(f'> {message}')
@@ -227,25 +237,26 @@ class Bot:
         if message.user == master and message.text is not None:
             if wait_if_not_in_timeframe(self, timeframes):
                 if 'Catch it using !pokecatch' in message.text:
-                    if not self.should_miss():
-                        self.Missed = False 
-                        if AutoCatch:
-                            for word in pokemon.LIST:
-                                word_parts = word.split(':')
+                    self.Calculatet_Time = datetime.datetime.now() >= self.time_needed    
+                    if AutoCatch:
+                        for word in pokemon.LIST:
+                            word_parts = word.split(':')
+                            if not self.should_miss() and not word_parts[2] != 'True': 
                                 if word_parts[0] in message.text:
+                                    self.WaitForMoney = False
                                     print(f"Its a {word_parts[0]}!")
                                     self.send_Telegram_msg(f"Its a {word_parts[0]}!")
                                     #Compare Thrown Balls to list an Print
                                     if word_parts[1] == 'True':
-                                        if word_parts[2] not in balls.BALLS:
+                                        if word_parts[3] not in balls.BALLS:
                                             if AutoBall:
                                                 if self.Calculatet_Time:
-                                                    word_parts[2] = BuyBall
+                                                    word_parts[3] = BuyBall
                                                     wait_random_time(self)
                                                     self.send_privmsg(message.channel, CatchEmote)
-                                                    print(f'Throw {word_parts[2]}!')
-                                                    self.send_Telegram_msg(f'Throw {word_parts[2]}!')
-                                                    self.UsedBall = word_parts[2]
+                                                    print(f'Throw {word_parts[3]}!')
+                                                    self.send_Telegram_msg(f'Throw {word_parts[3]}!')
+                                                    self.UsedBall = word_parts[3]
                                                 else:
                                                     self.MoneyWaitMessage(received_msg)       
                                             else:
@@ -257,32 +268,35 @@ class Bot:
                                                     )
                                                 self.send_privmsg(message.channel, Emote)
                                         else: #Timerball and Quickball logic
-                                            if word_parts[2] in balls.BALLS:
-                                                if word_parts[2] != BuyBall:
-                                                    self.UsedBall = word_parts[2]
-                                                    if word_parts[2] == 'Fastball':
+                                            if word_parts[3] in balls.BALLS:
+                                                if word_parts[3] != BuyBall:
+                                                    self.UsedBall = word_parts[3]
+                                                    if word_parts[3] == 'Fastball':
                                                         print("Fastball! Throw Instantly!")
                                                         self.send_Telegram_msg("Quickball! Throw Fast!")
-                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
-                                                    elif word_parts[2] == 'Timerball':
-                                                        print('Its a Timerball. Slowpoke time!')
-                                                        self.send_Telegram_msg('Its a Timerball. Slowpoke time!')
-                                                        time.sleep(80)
-                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
+                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[3]}')
+                                                    elif word_parts[3] == 'Timerball':
+                                                        print(f'Its a Timerball. Slowpoke time! Wait for {config.TimerBallTime}!')
+                                                        self.send_Telegram_msg(f'Its a Timerball. Slowpoke time! Wait for {config.TimerBallTime}!')
+                                                        time.sleep(config.TimerBallTime)
+                                                        print(f'Throw {word_parts[3]}!')
+                                                        self.send_Telegram_msg(f'Throw {word_parts[3]}!')
+                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[3]}')
                                                     else:
                                                         wait_random_time(self)
-                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
-                                                        print(f'Throw {word_parts[2]}!')
-                                                        self.send_Telegram_msg(f'Throw {word_parts[2]}!')
+                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[3]}')
+                                                        print(f'Throw {word_parts[3]}!')
+                                                        self.send_Telegram_msg(f'Throw {word_parts[3]}!')
                                                 else:
                                                     if self.Calculatet_Time:
                                                         wait_random_time(self)
-                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[2]}')
-                                                        print(f'Throw {word_parts[2]}!')
-                                                        self.send_Telegram_msg(f'Throw {word_parts[2]}!')
+                                                        self.send_privmsg(message.channel, f'{CatchEmote} {word_parts[3]}')
+                                                        print(f'Throw {word_parts[3]}!')
+                                                        self.send_Telegram_msg(f'Throw {word_parts[3]}!')
                                                     else:
                                                         self.MoneyWaitMessage(received_msg)
                                     else:#Sends emote if Pokemon sould not be catched.
+                                        self.Missed = True
                                         print (f'A {word_parts[0]}... Ill Pass on that!')
                                         self.send_Telegram_msg(f'A {word_parts[0]}... Ill Pass on that!')
                                         random_time = random.randint(50, 70)
@@ -290,23 +304,27 @@ class Bot:
                                         self.send_privmsg(message.channel, Emote)
                                         print(f"Send {Emote} to collect money!") 
                                         self.send_Telegram_msg(f"Send {Emote} to collect money!")
-                        else:   #Just sends emotes if Autocatch is off
-                            print(
-                                'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
-                                ) 
-                            self.send_Telegram_msg(
-                                'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
-                                ) 
-                            random_time = random.randint(50, 70) 
-                            wait_random_time(self)
-                            self.send_privmsg(message.channel, Emote) 
-                            print(f"Send {Emote} to collect money!")  
-                            self.send_Telegram_msg(f"Send {Emote} to collect money!")   
-                    else:
-                        self.Missed = True
-                        print(f"Missed the catch on purpose!")  
-                        self.send_Telegram_msg(f"Missed the catch on purpose!")
+                            else:
+                                self.Missed = True
+                                if word_parts[0] in message.text:
+                                    print(f"Its a {word_parts[0]}!")
+                                    print(f"Missed the catch on purpose!")  
+                                    self.send_Telegram_msg(f"Its a {word_parts[0]}!")
+                                    self.send_Telegram_msg(f"Missed the catch on purpose!")
 
+                    else:   #Just sends emotes if Autocatch is off
+                        print(
+                            'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
+                            ) 
+                        self.send_Telegram_msg(
+                            'Autocatch is off. Do we have Balls to throw? If yes Type the Codeword in chat to resume.'
+                            ) 
+                        random_time = random.randint(50, 70) 
+                        wait_random_time(self)
+                        self.send_privmsg(message.channel, Emote) 
+                        print(f"Send {Emote} to collect money!")  
+                        self.send_Telegram_msg(f"Send {Emote} to collect money!")   
+                
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
                     if f'@{UserLow}' in message.text:
@@ -343,6 +361,7 @@ class Bot:
                             
                 #Look for failed purachase               
                 elif '''You don't have enough''' in message.text:
+                    self.WaitForMoney = True
                     if f'@{UserLow}' in message.text:
                         match = re.search(r'\D*(\d+)', message.text)
                         if match:
@@ -352,15 +371,16 @@ class Bot:
                             self.send_privmsg(message.channel, '!pokepass')
                             print('Get Balance')
                             self.send_Telegram_msg("Get Balance")
+                            
                 #Check if catched       
                 elif 'has been caught by:' in message.text:
+                    if not hasattr(self, "WaitForMoney"):
+                        self.WaitForMoney = False
                     if not hasattr(self, "Missed"):
                         self.Missed = False
-                    if self.Missed == True:
-                        return
-                    else:
-                        if AutoCatch == True:
-                            if self.Calculatet_Time:
+                    if not self.Missed:
+                        if AutoCatch:
+                            if not self.WaitForMoney:
                                 if UserLow in message.text:
                                     print('Catched it! =D')
                                     self.send_Telegram_msg("Catched it! =D")
@@ -368,11 +388,11 @@ class Bot:
                                     print('It broke out! =(')
                                     self.send_Telegram_msg("It broke out! =(")
                 elif 'No one caught it.' in message.text:
-                    if self.Missed == True:
-                        return
-                    else:
+                    if not hasattr(self, "Missed"):
+                        self.Missed = False
+                    if not self.Missed:
                         if AutoCatch == True:
-                            if self.Calculatet_Time:
+                            if not self.WaitForMoney:
                                 print('It broke out! =(')
                                 self.send_Telegram_msg("It broke out! =(")
                 
@@ -384,7 +404,8 @@ class Bot:
                             self.Income = config.Income 
                             self.Balance = int(match.group(1))
                             #print(f'Your balance is {int(match.group(1))}')
-                            self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)               
+                            self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)     
+
         # Ping Pong with Twitch
         if message.irc_command == "PING":
             self.send_command("PONG :tmi.twitch.tv")
@@ -402,10 +423,24 @@ class Bot:
                 self.send_Telegram_msg("Stop Autocatch")           
 
     def loop_for_messages(self):
+        last_message_time = time.time()
         while True:
             received_msgs = self.irc.recv(2048).decode()
+            if not received_msgs:
+                # Handle a situation where the connection is closed unexpectedly
+                print("Connection closed unexpectedly. Reconnecting...")
+                self.send_Telegram_msg("Connection closed unexpectedly. Reconnecting...")
+                self.connect()
+
             for received_msg in received_msgs.split("\r\n"):
                 self.handle_message(received_msg)
+                last_message_time = time.time()
+
+            # Check if no message has been received for 18 minutes
+            if time.time() - last_message_time > 18 * 60:
+                print("No message received for 18 minutes. Reconnecting...")
+                self.send_Telegram_msg("No message received for 18 minutes. Reconnecting...") 
+                self.connect()
 
     #Send messages to telegram
     def send_Telegram_msg(self, text):
@@ -422,6 +457,7 @@ class Bot:
 
     def MoneyWaitMessage(self, received_msg): #Just sends emotes if it dosent have money to buy balls.
             Emote = config.Emote
+            self.WaitForMoney = True
             message = self.parse_message(received_msg)
             print(
                 f'Still not enough money. Need to wait until {self.formatted_time}. Just send emote.'
