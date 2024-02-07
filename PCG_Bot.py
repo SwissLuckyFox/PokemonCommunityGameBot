@@ -333,7 +333,7 @@ class Bot:
                 
                 #Try to buy balls  
                 elif '''You don't own that ball. Check the extension to see your items''' in message.text:
-                    if f'@{UserLow}' in message.text:
+                    if f'@{trainer}' in message.text:
                         if self.UsedBall != BuyBall:
                             if config.AutoBall:
                                 print(f"""I don't have {self.UsedBall}! Try to throw {BuyBall}!""")
@@ -349,7 +349,7 @@ class Bot:
                             self.send_Telegram_msg(f'Try to buy {BuyBall}!')
                 
                 #Try to throw after Purchase   
-                elif f'@{UserLow} ''Purchase successful!' == message.text:
+                elif f'@{trainer} ''Purchase successful!' == message.text:
                     if BuyBall != 'Pokeball':
                         print(f'Bought {HowMany} {BuyBall}s!')
                         self.send_Telegram_msg(f'Bought {HowMany} {BuyBall}s!')
@@ -367,7 +367,7 @@ class Bot:
                             
                 #Look for failed purachase               
                 elif '''You don't have enough''' in message.text:
-                    if f'@{UserLow}' in message.text:
+                    if f'@{trainer}' in message.text:
                         match = re.search(r'\D*(\d+)', message.text)
                         if match:
                             self.NeededMoney = int(match.group(1))
@@ -405,6 +405,15 @@ class Bot:
                             self.Balance = int(match.group(1))
                             #print(f'Your balance is {int(match.group(1))}')
                             self.CalculateTimeNeed(self.NeededMoney, self.Balance, self.Income)     
+                
+                #Cristmas event stuff
+                elif "A christmas Delibird appeared!" in message.text:
+                    print('A christmas Delibird appeared!')
+                    self.send_Telegram_msg("A christmas Delibird appeared!")
+                    wait_random_time(self)
+                    self.send_privmsg(message.channel, 'Nice')
+                    print('Was nice this year.')
+                    self.send_Telegram_msg("Was nice this year.")
 
         # Ping Pong with Twitch
         if message.irc_command == "PING":
