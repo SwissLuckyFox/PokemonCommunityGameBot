@@ -240,9 +240,9 @@ class Bot:
                     if AutoCatch:
                         for word in pokemon.LIST:
                             word_parts = word.split(':')
-                            if not self.should_miss() and not word_parts[2] != 'True':
-                                self.Missed = False 
+                            if not self.should_miss() and not word_parts[2] != 'True': 
                                 if word_parts[0] in message.text:
+                                    self.Missed = False
                                     print(f"Its a {word_parts[0]}!")
                                     self.send_Telegram_msg(f"Its a {word_parts[0]}!")
                                     #Compare Thrown Balls to list an Print
@@ -389,7 +389,6 @@ class Bot:
                                     print('It broke out! =(')
                                     self.send_Telegram_msg("It broke out! =(")
                 elif 'No one caught it.' in message.text:
-                    print(5)
                     if not self.Missed:
                         if AutoCatch:
                             if not self.WaitForMoney:
@@ -398,7 +397,7 @@ class Bot:
                 
                 #Gets the Balance and starts Calculation
                 elif 'Balance' in message.text:
-                    if UserLow in message.text:
+                    if trainer in message.text:
                         match = re.search(r'\$(\d+)', message.text)
                         if match:
                             self.Income = config.Income 
