@@ -311,8 +311,8 @@ class Bot:
                                         print(f"Send {Emote} to collect money!") 
                                         self.send_Telegram_msg(f"Send {Emote} to collect money!")
                             else:
-                                self.Missed = bool(True)
                                 if word_parts[0] in message.text:
+                                    self.Missed = bool(True)
                                     print(f"Its a {word_parts[0]}!")
                                     print(f"Missed the catch on purpose!")  
                                     self.send_Telegram_msg(f"Its a {word_parts[0]}!")
@@ -368,7 +368,6 @@ class Bot:
                             
                 #Look for failed purachase               
                 elif '''You don't have enough''' in message.text:
-                    print(type(self.Missed))
                     if f'@{trainer}' in message.text:
                         match = re.search(r'\D*(\d+)', message.text)
                         if match:
@@ -381,7 +380,6 @@ class Bot:
                             
                 #Check if catched       
                 elif 'has been caught by:' in message.text:
-                    print(type(self.Missed))
                     if not self.Missed:
                         if AutoCatch:
                             if not self.WaitForMoney:
@@ -392,7 +390,6 @@ class Bot:
                                     print('It broke out! =(')
                                     self.send_Telegram_msg("It broke out! =(")
                 elif 'No one caught it.' in message.text:
-                    print(type(self.Missed))
                     if not self.Missed:
                         if AutoCatch:
                             if not self.WaitForMoney:
