@@ -429,11 +429,42 @@ class Bot:
             if config.CodewordStop in message.text:
                 self.AutoCatch = False
                 print('Stop Autocatch')
-                self.send_Telegram_msg("Stop Autocatch")           
+                self.send_Telegram_msg("Stop Autocatch")  
 
+    #Failsave Stuff
+    def has_internet_access(self):
+        try:
+            requests.get("http://www.google.com", timeout=1)
+            print("Check internet")
+            return True
+        except requests.ConnectionError:
+            return False
+        
     def loop_for_messages(self):
         last_message_time = time.time()
+        internet_was_away = False  # Flag to track if internet was away
+        last_internet_check_time = time.time()  # Track last internet access check time
         while True:
+            current_time = time.time()  # Get the current time
+            # Check for internet access every 10 seconds
+            if current_time - last_internet_check_time >= 10:
+                if not self.has_internet_access():
+                    if not internet_was_away:
+                        print("No internet access. Waiting for internet...")
+                        self.send_Telegram_msg("No internet access. Waiting for internet...")
+                        internet_was_away = True
+                    last_internet_check_time = current_time  # Update last check time
+                    continue
+                else:
+                    if internet_was_away:
+                        internet_was_away = False
+                        print("Internet access restored. Reconnecting to IRC...")
+                        self.send_Telegram_msg("Internet access restored. Reconnecting to IRC...")
+                        self.connect()  # Reconnect here
+                    last_internet_check_time = current_time  # Update last check time
+
+
+
             received_msgs = self.irc.recv(2048).decode()
             if not received_msgs:
                 # Handle a situation where the connection is closed unexpectedly
@@ -448,7 +479,7 @@ class Bot:
             # Check if no message has been received for 18 minutes
             if time.time() - last_message_time > 18 * 60:
                 print("No message received for 18 minutes. Reconnecting...")
-                self.send_Telegram_msg("No message received for 18 minutes. Reconnecting...") 
+                self.send_Telegram_msg("No message received for 1 minutes. Reconnecting...") 
                 self.connect()
 
     #Send messages to telegram
