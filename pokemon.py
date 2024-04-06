@@ -5,10 +5,12 @@
 #If you want it to never skip it with the randome 
 #THE CAPITAL LETTER IS IMPORTENT! It won't work with "true" it needs to be "True"
 #If no ball is specified, it will throw a Pokeball if Autoball is enabled in the Config file.
+#If a ball is set it overwrites the recommanded balls! 
 ########################
 LIST = [
 ######Special Mons######
 'Unidentified Ghost:True:True:',
+'Elemental Dragon:True:True:',
 ########################
 'Bulbasaur:True:True:',
 'Ivysaur:True:True:',
