@@ -16,6 +16,8 @@ irc_port = 6697
 AutoCatch = True
 #use Pokeballs if no ball is spesified (True/False)
 AutoBall = True
+#Use Deemonrider Balls
+UseRecommended = True
 #What and How many Balls should be bought. Make i recommend Pokeballs. But you do you.
 BallToBuy = 'Pokeball'
 HowMany = 10
