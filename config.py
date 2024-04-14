@@ -3,14 +3,14 @@ OAUTH_TOKEN = ""
 #Your Username.
 Username = ""
 #What Channels to join.
-Channels = ['',]
+Channels = ["",]
 #User The bot should Listen to.
-Pokemonbot = ''
+Pokemonbot = ""
 #Telegram Bot Token
 TelegramBotToken = ""
-TelegramChatID = 123456789
+TelegramChatID = 0
 #IRC Server Connection
-irc_server = 'irc.chat.twitch.tv'
+irc_server = "irc.chat.twitch.tv"
 irc_port = 6697
 #Auto Catcher switch (True/Fals)
 AutoCatch = True
@@ -19,15 +19,15 @@ AutoBall = True
 #Use Deemonrider Balls
 UseRecommended = True
 #What and How many Balls should be bought. Make i recommend Pokeballs. But you do you.
-BallToBuy = 'Pokeball'
+BallToBuy = "Pokeball"
 HowMany = 10
 #Codeword to Resume. Make shure the bot dosent type it itself! Dont use deemon emotes.
-CodewordStop = 'Banana'
-CodewordStart = 'Apple'
+CodewordStop = "Banana"
+CodewordStart = "Apple"
 #Message or Emote it sends to Collect Coins
-Emote = 'deemon8Hype'
+Emote = "deemon8Hype"
 #Command or Emote to use to throw balls
-CatchEmote = 'deemon8Catch'
+CatchEmote = "deemon8Catch"
 #Your money income per Houer, 800 is just a guess by me.
 Income = 800
 #The timeframe used to randomise the throws (in secounds)
@@ -38,7 +38,7 @@ TimerBallTime = 85
 #Shows randome time in Messages True/False
 ShowRandomeTime = True
 #Randome miss chance in %. For example if you set it to 20 it misses 20% of the catch messages. It wont send an emote as well.
-MissPercentage = 5
+MissPercentage = 0
 #Timeframes where the Bot sould run. With a sprinkle of randome time =)
 timeframes = {
     "Monday": {
