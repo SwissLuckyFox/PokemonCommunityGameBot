@@ -6,8 +6,8 @@
 ########################
 LIST = [
 ##############################Special Mons##############################
-{"Name": """Unidentified Ghost""", "DexNr": 0, "Catch": True, "AllowSkip": True, ""},
-{"Name": """Elemental Dragon""", "DexNr": 0, "Catch": True, "AllowSkip": True, ""},
+{"Name": """Unidentified Ghost""", "DexNr": 0, "Catch": True, "AllowSkip": True, "UseBalls": ""},
+{"Name": """Elemental Dragon""", "DexNr": 0, "Catch": True, "AllowSkip": True, "UseBalls": ""},
 ########################################################################
 {"Name": """Bulbasaur""", "DexNr": 1, "Catch": True, "AllowSkip": True, "UseBalls":""},
 {"Name": """Ivysaur""", "DexNr": 2, "Catch": True, "AllowSkip": True, "UseBalls":""},
