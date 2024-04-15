@@ -234,7 +234,7 @@ class Bot:
             return
         master = config.Pokemonbot.lower()
         message = self.parse_message(received_msg)
-        #print(f'> {message}')
+        print(f'> {message}')
         trainer = self.username
         BuyBall = config.BallToBuy
         HowMany = config.HowMany
@@ -292,7 +292,7 @@ class Bot:
                                     self.send_Telegram_msg("Missed the catch on purpose!")
    
                 #Try to buy balls  
-                elif """You don"t own that ball. Check the extension to see your items""" in message.text:
+                elif """You don't own that ball. Check the extension to see your items""" in message.text:
                     if f'@{trainer}' in message.text:
                         if self.UsedBall == []:
                             self.UsedBall = self.BuyBall
@@ -328,34 +328,35 @@ class Bot:
                             #self.send_Telegram_msg("Recommendations are on cooldown. Skipping...")
 
                 #Try to throw after Purchase   
-                elif f"@{trainer}" "Purchase successful" == message.text:
-                    for pokeball_data in balls.LIST:
-                        if pokeball_data["Name"] == self.BuyBall:
-                            pokeball_data["Stock"] += (int(self.HowMany) - 1)
-                            with open("Balls.py", "w") as f:
-                                f.write("LIST = [\n")
-                                for pokeball_data in balls.LIST:
-                                    f.write(f"    {pokeball_data},\n")
-                                f.write("]")
-                    if BuyBall != ["Pokeball"]:
-                        print(f"Bought {HowMany} {BuyBall}s")
-                        self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
-                        wait_random_time(self)
-                        self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
-                        print(f"Throw {BuyBall}")
-                        self.send_Telegram_msg(f"Throw {BuyBall}")
-                        self.UsedBall = BuyBall
-                    elif BuyBall == ["Pokeball"]:
-                        print(f"Bought {HowMany} {BuyBall}s")
-                        self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
-                        wait_random_time(self)
-                        self.send_privmsg(message.channel, CatchEmote)
-                        print(f"Throw {BuyBall}")
-                        self.send_Telegram_msg(f"Throw {BuyBall}")
-                        self.UsedBall = BuyBall
+                elif "Purchase Successful" in message.text:
+                    if f"@{trainer}" in message.text:
+                        for pokeball_data in balls.LIST:
+                            if pokeball_data["Name"] == self.BuyBall:
+                                pokeball_data["Stock"] += (int(self.HowMany) - 1)
+                                with open("Balls.py", "w") as f:
+                                    f.write("LIST = [\n")
+                                    for pokeball_data in balls.LIST:
+                                        f.write(f"    {pokeball_data},\n")
+                                    f.write("]")
+                        if BuyBall != ["Pokeball"]:
+                            print(f"Bought {HowMany} {BuyBall}s")
+                            self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
+                            wait_random_time(self)
+                            self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
+                            print(f"Throw {BuyBall}")
+                            self.send_Telegram_msg(f"Throw {BuyBall}")
+                            self.UsedBall = BuyBall
+                        elif BuyBall == ["Pokeball"]:
+                            print(f"Bought {HowMany} {BuyBall}s")
+                            self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
+                            wait_random_time(self)
+                            self.send_privmsg(message.channel, CatchEmote)
+                            print(f"Throw {BuyBall}")
+                            self.send_Telegram_msg(f"Throw {BuyBall}")
+                            self.UsedBall = BuyBall
                             
                 #Look for failed purachase               
-                elif """You don"t have enough""" in message.text:
+                elif f"""You don't have enough""" in message.text:
                     if f"@{trainer}" in message.text:
                         match = re.search(r'\D*(\d+)', message.text)
                         if match:
