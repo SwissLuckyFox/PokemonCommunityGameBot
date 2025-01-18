@@ -3,16 +3,25 @@ OAUTH_TOKEN = ""
 #Your Username.
 Username = ""
 #What Channels to join.
-Channels = ["",]
+Channels = ["DeemonRider",]
 #User The bot should Listen to.
-Pokemonbot = ""
+Pokemonbot = "PokemonCommunityGame"
 #Telegram Bot Token
+UseTelegram = True
 TelegramBotToken = ""
-TelegramChatID = 0
+TelegramChatID = 1000000
 #IRC Server Connection
 irc_server = "irc.chat.twitch.tv"
 irc_port = 6697
-#Auto Catcher switch (True/Fals)
+#Discord Stuff
+BotDiscord = True #BANNABLE BY DISCORD!
+DiscordDate = "2025-01-18"
+DiscordChannel = 800433942695247872
+DiscordToken = ""
+DiscordUsername = "" #Username Without the @
+DiscordMessage = "!Pokeda"
+DiscordTimeframe = "20:00-23:00"
+#Auto Catcher switch (True/False)
 AutoCatch = True
 #use Pokeballs if no ball is spesified (True/False)
 AutoBall = True
@@ -51,7 +60,7 @@ timeframes = {
     },
     "Tuesday": {
         "start": "07:00",
-        "end": "23:30",
+        "end": "23:35",
         "random_interval": {
             "min": 15,
             "max": 30

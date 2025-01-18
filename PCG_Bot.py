@@ -11,6 +11,7 @@ from collections import namedtuple
 from config import timeframes, AutoCatch
 import config
 import requests
+import importlib
 
 def on_message_receive(bot, message):
 
@@ -78,6 +79,7 @@ def remove_prefix(string, prefix):
   
 # Generate a random number in secounds
 def wait_random_time(Bot):
+    Bot.reload_modules()
     random_time = random.randint(config.RandomeFrom, config.RandomeTo)
     print(f"Wait for {random_time} secounds.")
     if config.ShowRandomeTime:
@@ -108,6 +110,9 @@ class Bot:
         self.UseRecommended = config.UseRecommended
         self.AutoBall = config.AutoBall
         self.UsedBall = []
+    def reload_modules(self):
+        importlib.reload(config)
+        importlib.reload(balls)
 
     def init(self):
         self.connect()
@@ -234,7 +239,7 @@ class Bot:
             return
         master = config.Pokemonbot.lower()
         message = self.parse_message(received_msg)
-        print(f'> {message}')
+        #print(f'> {message}')
         trainer = self.username
         BuyBall = config.BallToBuy
         HowMany = config.HowMany
@@ -245,6 +250,7 @@ class Bot:
         if message.user == master and message.text is not None:
             if wait_if_not_in_timeframe(self, timeframes):
                 if "Catch it using !pokecatch" in message.text:
+                    self.reload_modules()
                     self.Calculatet_Time = datetime.datetime.now() >= self.time_needed    
                     # Iterate over the Pokemon list
                     for pokemon_data in pokemon.LIST:
@@ -429,6 +435,7 @@ class Bot:
         return self.BuyBall  # If no recommended balls are available, return the default ball
 
     def ThrowBall(self, received_msg):
+            self.reload_modules()
             message = self.parse_message(received_msg)
             print(self.recommended_Balls)
             
