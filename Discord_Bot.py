@@ -96,7 +96,7 @@ class SelfBot(discord.Client):
         start_today = now.replace(hour=start_time.hour, minute=start_time.minute, second=0, microsecond=0)
         end_today = now.replace(hour=end_time.hour, minute=end_time.minute, second=0, microsecond=0)
 
-        if now >= end_today:
+        if now >= end_today and self.last_sent_date != today:
             self.log_to_telegram("The current time is outside the specified Discord timeframe. The message will be scheduled for tomorrow.")
             start_today += timedelta(days=1)
 

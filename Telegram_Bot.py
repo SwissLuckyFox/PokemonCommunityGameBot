@@ -78,16 +78,18 @@ class TelegramBot:
 
     async def process_command(self, message: Message):
         """
-        Processes all commands starting with '!'.
+        Processes messages that start with '!'.
+        If the command is invalid, provides guidance to use the Commands command.
         """
         if not message.text.startswith("!"):
+            # Ignore messages that do not start with '!'
             return
 
         # Remove '!' and split the message into parts
         parts = message.text[1:].strip().split(maxsplit=1)
 
         if len(parts) < 1:
-            await message.answer("Invalid format. Please check your command.")
+            await message.answer("Invalid format. Use the !Commands command to see the correct usage.")
             return
 
         command = parts[0]
@@ -107,47 +109,7 @@ class TelegramBot:
                     "!ConfigKeys - List all possible configuration keys."
                 )
                 await message.answer(commands_list)
-            elif command == "SeeStock":
-                if len(parts) == 2:
-                    await self.see_stock(message, parts[1])
-                else:
-                    await message.answer("Invalid format. Example: !SeeStock Netball or !SeeStock All")
-            elif command in ["AddBall", "RemoveBall", "SetStock"]:
-                if len(parts) != 2:
-                    await message.answer("Invalid format. Example: !AddBall Netball 10")
-                    return
-
-                subparts = parts[1].split()
-                if len(subparts) != 2:
-                    await message.answer("Invalid format. Example: !AddBall Netball 10")
-                    return
-
-                ball_name, amount = subparts[0], int(subparts[1])
-
-                if command == "AddBall":
-                    await self.add_ball(message, ball_name, amount)
-                elif command == "RemoveBall":
-                    await self.remove_ball(message, ball_name, amount)
-                elif command == "SetStock":
-                    await self.set_stock(message, ball_name, amount)
-            elif command == "Show":
-                if len(parts) < 2:
-                    await message.answer("Invalid format. Example: !Show TimerBallTime")
-                    return
-
-                key = parts[1].strip()
-                if key.lower() == "timeframes":
-                    await self.show_timeframes(message)
-                elif hasattr(config, key):
-                    value = getattr(config, key)
-                    await message.answer(f"{key} = {value}")
-                else:
-                    await message.answer(f"'{key}' is not a valid configuration key.")
-            elif command == "ConfigKeys":
-                keys = [key for key in dir(config) if not key.startswith("_")]
-                response = "Available configuration keys:\n" + "\n".join(keys)
-                await message.answer(response)
-            elif command == "Set" and parts[1].startswith("Timeframe"):
+            elif command == "Set" and len(parts) > 1 and parts[1].startswith("Timeframe"):
                 subparts = parts[1].replace(":", "").split()
                 if len(subparts) < 10:
                     await message.answer("Invalid format. Example: !Set Timeframe Monday start: 2230 end: 2330 interval min 15 max 30")
@@ -179,10 +141,11 @@ class TelegramBot:
                 except ValueError:
                     await message.answer("Invalid interval values. Please ensure min and max are numbers.")
             else:
-                await message.answer("Unknown command. Please check your input.")
+                await message.answer("Unknown command. Use the !Commands command to see available commands.")
 
         except ValueError:
-            await message.answer("Invalid format. Please check your input.")
+            await message.answer("Invalid format. Use the !Commands command to see the correct usage.")
+
 
     async def show_timeframes(self, message: Message):
         response = "Timeframes:\n"
