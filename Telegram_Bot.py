@@ -23,10 +23,14 @@ class TelegramBot:
 
     def save_balls(self):
         """
-        Saves the ball list to balls.py.
+        Saves the ball list to balls.py in a nicely formatted way.
         """
         with open("balls.py", "w") as file:
-            file.write(f"LIST = {balls.LIST}")
+            file.write("LIST = [\n")
+            for ball in balls.LIST:
+                file.write(f"    {ball},\n")
+            file.write("]\n")
+
 
     def save_config(self):
         """
@@ -188,6 +192,21 @@ class TelegramBot:
                 f"Random Interval: Min {data['random_interval']['min']}, Max {data['random_interval']['max']}\n"
             )
         await message.answer(response)
+    async def see_stock(self, message: Message, ball_name: str):
+        """
+        Shows the stock of a specific ball or all balls.
+        """
+        if ball_name.lower() == "all":
+            response = "Stock for all balls:\n"
+            for ball in balls.LIST:
+                response += f"{ball['Name']}: {ball['Stock']}\n"
+            await message.answer(response)
+        else:
+            ball = self.find_ball(ball_name)
+            if ball:
+                await message.answer(f"{ball['Name']} stock: {ball['Stock']}")
+            else:
+                await message.answer(f"Sorry, {ball_name} not found.")
 
     async def add_ball(self, message: Message, ball_name: str, amount: int):
         ball = self.find_ball(ball_name)
