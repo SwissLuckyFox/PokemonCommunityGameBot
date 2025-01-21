@@ -6,6 +6,7 @@ from aiogram.types import Message
 import config  # Direct access to configuration values
 import balls  # Direct access to the ball list
 
+
 class TelegramBot:
     def __init__(self):
         self.bot = Bot(token=config.TelegramBotToken)
@@ -31,41 +32,20 @@ class TelegramBot:
                 file.write(f"    {ball},\n")
             file.write("]\n")
 
-
     def save_config(self):
         """
-        Replaces the timeframes section in config.py without duplicating or corrupting the rest of the file.
+        Updates config.py with the current state of the config object.
         """
-        with open("config.py", "r") as file:
-            lines = file.readlines()
-
-        # Locate the start and end of the timeframes block
-        start_idx = None
-        end_idx = None
-        for idx, line in enumerate(lines):
-            if line.strip().startswith("timeframes ="):
-                start_idx = idx
-            elif start_idx is not None and line.strip() == "    },":
-                end_idx = idx
-                break
-
-        if start_idx is None or end_idx is None:
-            raise ValueError("The timeframes block was not found in config.py.")
-
-        # Debugging: Show indices
-        print(f"Debug: start_idx = {start_idx}, end_idx = {end_idx}")
-
-        # Format the updated timeframes block
-        updated_timeframes = "timeframes = " + json.dumps(config.timeframes, indent=4) + ",\n"
-        # Debugging: Log the updated block
-        print(f"Debug: Writing updated timeframes block:\n{updated_timeframes}")
-
-        # Replace the timeframes block
-        new_lines = lines[:start_idx] + [updated_timeframes] + lines[end_idx + 1:]
-
         with open("config.py", "w") as file:
-            file.writelines(new_lines)
-
+            for key in dir(config):
+                if key.startswith("__"):
+                    continue
+                value = getattr(config, key)
+                if isinstance(value, dict):
+                    value = json.dumps(value, indent=4)
+                elif isinstance(value, str):
+                    value = f'"{value}"'
+                file.write(f"{key} = {value}\n")
 
     def find_ball(self, ball_name: str):
         """
@@ -78,8 +58,7 @@ class TelegramBot:
 
     async def process_command(self, message: Message):
         """
-        Processes messages that start with '!'.
-        If the command is invalid, provides guidance to use the Commands command.
+        Processes messages that start with '!' and routes them to the correct handler.
         """
         if not message.text.startswith("!"):
             # Ignore messages that do not start with '!'
@@ -92,13 +71,14 @@ class TelegramBot:
             await message.answer("Invalid format. Use the !Commands command to see the correct usage.")
             return
 
-        command = parts[0]
+        command = parts[0].lower()  # Normalize command to lowercase
+        args = parts[1] if len(parts) > 1 else ""
 
         try:
-            if command == "Commands":
+            if command == "commands":
                 commands_list = (
                     "Available commands:\n"
-                    "!SeeStock <ball_name|All> - View stock of a specific ball or all balls.\n"
+                    "!ShowStock <ball_name|All> - View stock of a specific ball or all balls.\n"
                     "!AddBall <ball_name> <amount> - Add a specified number of balls.\n"
                     "!RemoveBall <ball_name> <amount> - Remove a specified number of balls.\n"
                     "!SetStock <ball_name> <amount> - Set the stock of a specific ball.\n"
@@ -109,43 +89,101 @@ class TelegramBot:
                     "!ConfigKeys - List all possible configuration keys."
                 )
                 await message.answer(commands_list)
-            elif command == "Set" and len(parts) > 1 and parts[1].startswith("Timeframe"):
-                subparts = parts[1].replace(":", "").split()
-                if len(subparts) < 10:
-                    await message.answer("Invalid format. Example: !Set Timeframe Monday start: 2230 end: 2330 interval min 15 max 30")
+
+            elif command == "configkeys":
+                # Dynamically list all keys in the config module
+                config_keys = [key for key in dir(config) if not key.startswith("__")]
+                response = "Available configuration keys:\n" + "\n".join(config_keys)
+                await message.answer(response)
+
+            elif command == "show":
+                # Handle !Show <config_key>
+                if not args:
+                    await message.answer("Please specify a configuration key to show. Example: !Show TelegramBotToken")
                     return
 
-                day = subparts[1]
-                if day not in config.timeframes:
-                    await message.answer("Invalid day. Please use a valid weekday like Monday, Tuesday, etc.")
+                config_key = args.strip()
+                if hasattr(config, config_key):
+                    value = getattr(config, config_key)
+                    if isinstance(value, dict):
+                        value = json.dumps(value, indent=4)
+                    await message.answer(f"{config_key}:\n{value}")
+                else:
+                    await message.answer(f"Config key '{config_key}' not found. Use !ConfigKeys to see available keys.")
+
+            elif command == "set":
+                if not "=" in args:
+                    await message.answer("Unknown Set Command. Example: !Set Income=900")
+                else:
+                    # Existing logic for parsing and updating the config key
+                    try:
+                        config_key, value = map(str.strip, args.split("=", 1))
+                        if hasattr(config, config_key):
+                            current_value = getattr(config, config_key)
+                            # Convert value to the correct type
+                            if isinstance(current_value, bool):
+                                value = value.lower() in ["true", "1", "yes"]
+                            elif isinstance(current_value, int):
+                                value = int(value)
+                            elif isinstance(current_value, float):
+                                value = float(value)
+                            elif isinstance(current_value, dict):
+                                value = json.loads(value)
+                            else:
+                                value = str(value)
+
+                            setattr(config, config_key, value)
+                            self.save_config()
+                            await message.answer(f"Config key '{config_key}' updated to: {value}")
+                        else:
+                            await message.answer(f"Config key '{config_key}' not found. Use !ConfigKeys to see available keys.")
+                    except Exception as e:
+                        await message.answer(f"Failed to update config key: {str(e)}")
+
+            elif command == "showstock":
+                if not args:
+                    await message.answer("Please provide a ball name or 'All'. Example: !ShowStock All")
                     return
+                await self.show_stock(message, args)
 
-                try:
-                    # Convert time to HH:MM format
-                    start = f"{subparts[3][:2]}:{subparts[3][2:]}"  # Converts 2230 -> 22:30
-                    end = f"{subparts[5][:2]}:{subparts[5][2:]}"    # Converts 2330 -> 23:30
-                    min_interval = int(subparts[8])
-                    max_interval = int(subparts[10])
+            elif command == "addball":
+                args_split = args.split(maxsplit=1)
+                if len(args_split) < 2 or not args_split[1].isdigit():
+                    await message.answer("Invalid format. Example: !AddBall <ball_name> <amount>")
+                    return
+                ball_name = args_split[0]
+                amount = int(args_split[1])
+                await self.add_ball(message, ball_name, amount)
 
-                    config.timeframes[day] = {
-                        "start": start,
-                        "end": end,
-                        "random_interval": {
-                            "min": min_interval,
-                            "max": max_interval
-                        }
-                    }
+            elif command == "removeball":
+                args_split = args.split(maxsplit=1)
+                if len(args_split) < 2 or not args_split[1].isdigit():
+                    await message.answer("Invalid format. Example: !RemoveBall <ball_name> <amount>")
+                    return
+                ball_name = args_split[0]
+                amount = int(args_split[1])
+                await self.remove_ball(message, ball_name, amount)
 
-                    self.save_config()
-                    await message.answer(f"Timeframe for {day} updated: Start {start}, End {end}, Interval Min {min_interval}, Max {max_interval}.")
-                except ValueError:
-                    await message.answer("Invalid interval values. Please ensure min and max are numbers.")
+            elif command == "setstock":
+                args_split = args.split(maxsplit=1)
+                if len(args_split) < 2 or not args_split[1].isdigit():
+                    await message.answer("Invalid format. Example: !SetStock <ball_name> <amount>")
+                    return
+                ball_name = args_split[0]
+                amount = int(args_split[1])
+                await self.set_stock(message, ball_name, amount)
+
+            elif command == "show":
+                if args.lower() == "timeframes":
+                    await self.show_timeframes(message)
+                else:
+                    await message.answer("Unknown key. Use the !Commands command to see available keys.")
+
             else:
                 await message.answer("Unknown command. Use the !Commands command to see available commands.")
 
-        except ValueError:
-            await message.answer("Invalid format. Use the !Commands command to see the correct usage.")
-
+        except Exception as e:
+            await message.answer(f"An error occurred: {str(e)}")
 
     async def show_timeframes(self, message: Message):
         response = "Timeframes:\n"
@@ -155,10 +193,8 @@ class TelegramBot:
                 f"Random Interval: Min {data['random_interval']['min']}, Max {data['random_interval']['max']}\n"
             )
         await message.answer(response)
-    async def see_stock(self, message: Message, ball_name: str):
-        """
-        Shows the stock of a specific ball or all balls.
-        """
+
+    async def show_stock(self, message: Message, ball_name: str):
         if ball_name.lower() == "all":
             response = "Stock for all balls:\n"
             for ball in balls.LIST:
@@ -208,6 +244,7 @@ class TelegramBot:
     async def run(self):
         print("Telegram bot is starting...")
         await self.dispatcher.start_polling(self.bot)
+
 
 if __name__ == "__main__":
     if not config.UseTelegram:
