@@ -334,12 +334,12 @@ class Bot:
                             #self.send_Telegram_msg("Recommendations are on cooldown. Skipping...")
 
                 #Try to throw after Purchase   
-                elif "Purchase Successful" in message.text:
+                elif "Purchase successful" in message.text:
                     if f"@{trainer}" in message.text:
                         for pokeball_data in balls.LIST:
                             if pokeball_data["Name"] == self.BuyBall:
                                 pokeball_data["Stock"] += (int(self.HowMany) - 1)
-                                with open("Balls.py", "w") as f:
+                                with open("balls.py", "w") as f:
                                     f.write("LIST = [\n")
                                     for pokeball_data in balls.LIST:
                                         f.write(f"    {pokeball_data},\n")
@@ -450,7 +450,7 @@ class Bot:
                         if self.PokeballName == self.UseBall:
                             if self.PokeballStock > 0:  # Check if the ball is in stock
                                 pokeball_data["Stock"] -= 1  # Decrement stock count
-                                with open("Balls.py", "w") as f:
+                                with open("balls.py", "w") as f:
                                     f.write("LIST = [\n")
                                     for pokeball_data in balls.LIST:
                                         f.write(f"    {pokeball_data},\n")
