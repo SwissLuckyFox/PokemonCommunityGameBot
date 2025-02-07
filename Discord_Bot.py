@@ -22,16 +22,6 @@ class SelfBot(discord.Client):
         self.balls = {ball["Name"].lower(): ball for ball in balls.LIST}  # Convert list to dictionary for easy lookup
         self.last_sent_date, self.bot_enabled, self.token, self.channel_id, self.message, self.fixed_time, self.max_delay = self.load_config()
 
-    async def on_message(self, message):
-        """Processes Discord messages to extract and log Pokéball rewards."""
-        if message.channel.id != self.channel_id or message.author == self.user:
-            return
-
-        if "daily reward" in message.content.lower():
-            extracted_balls = self.extract_pokeballs(message.content)
-            if extracted_balls:
-                self.update_ball_stock(extracted_balls)
-                await self.send_balls_to_telegram(extracted_balls)
     def load_config(self):
         """Loads configuration values from config.py and ensures correct parsing."""
         try:
@@ -54,21 +44,10 @@ class SelfBot(discord.Client):
                 message = message_match.group(1) if message_match else "!pokeda"
 
                 # Load fixed time
-                if time_match:
-                    fixed_time = datetime.strptime(time_match.group(1), "%H:%M").time()
-                else:
-                    fixed_time = None
+                fixed_time = datetime.strptime(time_match.group(1), "%H:%M").time() if time_match else None
 
                 # Load max delay
                 max_delay = int(delay_match.group(1)) if delay_match else 0
-
-                # Validate critical values
-                if not bot_enabled:
-                    print("Error: BotDiscord is set to false. Enable it in config.py")
-                if not token:
-                    print("Error: DiscordToken is missing.")
-                if not channel_id:
-                    print("Error: DiscordChannel is missing.")
 
                 return last_date, bot_enabled, token, channel_id, message, fixed_time, max_delay
 
@@ -76,74 +55,15 @@ class SelfBot(discord.Client):
             print(f"Error: {CONFIG_FILE} not found.")
             return None, False, None, None, "!pokeda", None, 0
 
-
-    def extract_pokeballs(self, message_text):
-        """Extracts Pokéball rewards from a message."""
-        ball_pattern = r"(\d+)x (\w+ball)"
-        matches = re.findall(ball_pattern, message_text, re.IGNORECASE)
-
-        extracted_balls = {}
-        for count, ball_name in matches:
-            normalized_name = ball_name.lower()
-            if normalized_name in self.balls:
-                extracted_balls[normalized_name] = extracted_balls.get(normalized_name, 0) + int(count)
-
-        return extracted_balls
-
-    def update_ball_stock(self, extracted_balls):
-        """Updates the Pokéball stock in balls.py while preserving its original format."""
-        # Load the current data from balls.py
-        try:
-            with open(BALLS_FILE, "r", encoding="utf-8") as f:
-                content = f.read()
-                data = ast.literal_eval(content.split("=", 1)[1].strip())  # Extract LIST from file
-        except Exception as e:
-            print(f"Error loading balls.py: {e}")
-            return
-
-        # Update stock values
-        for ball in data:
-            ball_name = ball["Name"].lower()
-            if ball_name in extracted_balls:
-                ball["Stock"] += extracted_balls[ball_name]
-
-        # Write back to balls.py with the original format
-        with open(BALLS_FILE, "w", encoding="utf-8") as f:
-            f.write("LIST = [\n")
-            for ball in data:
-                f.write(f"    {{'Name': '{ball['Name']}', 'Stock': {ball['Stock']}}},\n")
-            f.write("]\n")
-
-    async def send_balls_to_telegram(self, extracted_balls):
-        """Formats and sends Pokéball stock updates to Telegram."""
-        message = "**🎉 New Pokéball Rewards! 🎉**\n"
-        for ball_name, count in extracted_balls.items():
-            message += f"🔹 **{ball_name.capitalize()}**: +{count}\n"
-
-        await self.log_to_telegram(message)
-
-    async def log_to_telegram(self, text):
-        """Logs messages to Telegram asynchronously."""
-        print(text)
-        if self.telegram_bot:
-            try:
-                await self.telegram_bot.send_message(text)
-            except Exception as e:
-                print(f"Failed to send message to Telegram: {e}")
-
-
     async def on_ready(self):
         """Called when the bot is ready."""
         if not self.bot_enabled or not self.token or not self.channel_id:
             await self.log_to_telegram("The DiscordBot is disabled or not configured properly. Exiting...")
-
-            # Close the bot properly to avoid unclosed session errors
             await self.close()
             return
 
         await self.log_to_telegram(f"Logged in as Discord User {self.user}")
         await self.schedule_daily_message()
-
 
     async def schedule_daily_message(self):
         """Schedules the daily message with a random delay."""
@@ -152,16 +72,35 @@ class SelfBot(discord.Client):
             return
 
         today = datetime.now().date()
+
+        
         if self.last_sent_date == today.strftime("%Y-%m-%d"):
-            await self.log_to_telegram("The Discord message has already been sent today.")
-            return
+            await self.log_to_telegram("The Discord message has already been sent today. Scheduling for tomorrow.")
+            today += timedelta(days=1) 
 
-        # Calculate scheduled time
+        # Calculate scheduled time with random delay
         fixed_time_today = datetime.combine(today, self.fixed_time)
-        random_delay = random.randint(0, self.max_delay) * 60  # Convert minutes to seconds
-        scheduled_time = fixed_time_today + timedelta(seconds=random_delay)
+        random_delay_minutes = random.randint(0, self.max_delay)
+        random_delay_seconds = random.randint(0, 59)
+        scheduled_time = fixed_time_today + timedelta(minutes=random_delay_minutes, seconds=random_delay_seconds)
 
-        # If scheduled time is already passed, move to next day
+        now = datetime.now()
+        if scheduled_time < now:
+            scheduled_time += timedelta(days=1)
+
+        delay_seconds = (scheduled_time - now).total_seconds()
+        await self.log_to_telegram(f"Discord message scheduled for {scheduled_time.strftime('%Y-%m-%d %H:%M:%S')}.")
+
+        await asyncio.sleep(delay_seconds)
+        await self.send_daily_message()
+
+        # Calculate scheduled time with random delay
+        fixed_time_today = datetime.combine(today, self.fixed_time)
+        random_delay_minutes = random.randint(0, self.max_delay)
+        random_delay_seconds = random.randint(0, 59)
+        scheduled_time = fixed_time_today + timedelta(minutes=random_delay_minutes, seconds=random_delay_seconds)
+
+        # If scheduled time is already passed today, move to next day
         now = datetime.now()
         if scheduled_time < now:
             scheduled_time += timedelta(days=1)
@@ -173,42 +112,58 @@ class SelfBot(discord.Client):
         await self.send_daily_message()
 
     async def send_daily_message(self):
-        """Sends the daily message to the configured Discord channel."""
+        """Send the daily message to the configured Discord channel."""
         channel = self.get_channel(self.channel_id)
         if channel is None:
-            await self.log_to_telegram("Error: Discord Channel not found! Check DiscordChannel in config.")
-            await self.schedule_daily_message()
+            await self.log_to_telegram("Error: Discord channel not found! Check DiscordChannel in config.py.")
             return
 
         today = datetime.now().strftime("%Y-%m-%d")
+
         if self.last_sent_date == today:
-            await self.log_to_telegram("The Discord message has already been sent today.")
-            await self.schedule_daily_message()
+            await self.log_to_telegram("Already sent daily Discord message.")
             return
 
         try:
             await channel.send(self.message)
-            await self.log_to_telegram(f"Discord Message sent: {self.message}")
-            self.last_sent_date = today
+            await self.log_to_telegram(f"Discord message sent: {self.message}")
 
-            # Schedule next message after sending
+            # ✅ Save the new date BEFORE scheduling the next message
+            self.save_last_sent_date(today)
+            self.last_sent_date = today  # ✅ Ensure the new date is in memory
+
+            # ✅ Now schedule the next message after saving the date
             await self.schedule_daily_message()
 
         except Exception as e:
-            await self.log_to_telegram(f"Error while sending Discord message: {e}")
-            await self.schedule_daily_message()
+            await self.log_to_telegram(f"Failed to send the Discord message: {e}")
 
-    async def on_message(self, message):
-        """Handles incoming messages to check for mentions or errors."""
-        if message.channel.id != self.channel_id or message.author == self.user:
-            return
 
-        if message.mentions and self.user in message.mentions:
-            if "You already have claimed your daily reward." in message.content:
-                await self.log_to_telegram("Discord Message ignored: Daily reward already claimed.")
-                return
-            await self.log_to_telegram(f"Discord Message received: {message.content}")
 
+    def save_last_sent_date(self, date):
+        """Saves the last sent date in the configuration file."""
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                config = file.read()
+
+            updated_config = re.sub(r'DiscordDate = "\d{4}-\d{2}-\d{2}"', f'DiscordDate = "{date}"', config)
+
+            with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+                file.write(updated_config)
+
+            self.last_sent_date = date
+
+        except Exception as e:
+            print(f"Error saving the last sent date: {e}")
+
+    async def log_to_telegram(self, text):
+        """Logs messages to Telegram asynchronously."""
+        print(text)
+        if self.telegram_bot:
+            try:
+                await self.telegram_bot.send_message(text)
+            except Exception as e:
+                print(f"Failed to send message to Telegram: {e}")
 
 # Start Telegram and Discord Bots
 telegram_bot = TelegramBot()
