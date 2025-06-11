@@ -52,7 +52,7 @@ class TelegramBot:
         Finds a ball in the list.
         """
         for ball in balls.LIST:
-            if ball["Name"].lower() == ball_name.lower():
+            if normalize_ball_name(ball["Name"]) == normalize_ball_name(ball_name):
                 return ball
         return None
 
@@ -242,8 +242,14 @@ class TelegramBot:
         await self.bot.send_message(chat_id=config.TelegramChatID, text=text)
 
     async def run(self):
-        print("Telegram bot is starting...")
+        startup_msg = "TelegramBot started!\nReady to receive Commands!"
+        print(startup_msg)
+        await self.send_message(startup_msg)
         await self.dispatcher.start_polling(self.bot)
+
+
+def normalize_ball_name(name: str) -> str:
+    return name.replace(" ", "").lower()
 
 
 if __name__ == "__main__":
