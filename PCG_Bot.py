@@ -13,6 +13,9 @@ import config
 import requests
 import importlib
 
+def normalize_ball_name(name: str) -> str:
+    return name.replace(" ", "").lower()
+
 def on_message_receive(bot, message):
 
     utc_time = datetime.utcnow()
@@ -127,23 +130,27 @@ class Bot:
 
     def connect(self):
         while True:
-                    try:
-                        self.irc = ssl.wrap_socket(socket.socket())
-                        self.irc.connect((self.irc_server, self.irc_port))
-                        self.send_command(f"PASS {self.oauth_token}")
-                        self.send_command(f"NICK {self.username}")
-                        for channel in self.channels:
-                            self.send_command(f"JOIN #{channel}")
-                            print(
-                                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-                            )
-                            self.send_Telegram_msg(
-                                f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-                            )
-                        self.loop_for_messages()
-                    except (OSError, socket.error, ssl.SSLError) as e:
-                        print(f"Error during connection: {e}")
-                        time.sleep(10)  # Wait for 10 seconds before retrying
+            try:
+                context = ssl.create_default_context()
+                self.irc = context.wrap_socket(socket.socket(), server_hostname=self.irc_server)
+                self.irc.connect((self.irc_server, self.irc_port))
+                self.send_command(f"PASS {self.oauth_token}")
+                self.send_command(f"NICK {self.username}")
+                for channel in self.channels:
+                    self.send_command(f"JOIN #{channel}")
+                    print(
+                        f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
+                    )
+                    self.send_Telegram_msg(
+                        f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
+                    )
+                self.loop_for_messages()
+            except (OSError, socket.error, ssl.SSLError) as e:
+                print(f"Error during connection: {e}")
+                time.sleep(10)  # Wait for 10 seconds before retrying
+
+    # ...existing code...
+
         
     def get_user_from_prefix(self, prefix):
         domain = prefix.split("!")[0]
@@ -268,7 +275,7 @@ class Bot:
                                     self.WaitForMoney = False
                                     self.recommended_Balls = pokemon_data["UseBalls"].split() if pokemon_data["UseBalls"] else []
                                     print(f"It's a {self.pokemon_name}! DexNr: {self.DexNr}!")
-                                    self.send_Telegram_msg(f"It's a {self.pokemon_name}!")
+                                    self.send_Telegram_msg(f"It's a {self.pokemon_name}! DexNr: {self.DexNr}!")
                                     if self.can_catch:
                                         if self.recommended_Balls != []:
                                             print("ListNotreco")
@@ -308,7 +315,7 @@ class Bot:
                             self.ThrowBall(received_msg)
 
                 elif "Deemon recommends:" in message.text and self.UseRecommended:
-                    print("UseDeemon")
+                    #print("UseDeemon")
                     if not self.UseBall:
                         current_time = time.time()  # Get the current time
                         # Check if enough time has passed since the last recommendation
@@ -322,8 +329,8 @@ class Bot:
                             self.recommended_Balls = []
                             for word in recommended_balls_words:
                                 for pokeball_data in balls.LIST:
-                                    if word.strip() == pokeball_data["Name"]:
-                                        self.recommended_Balls.append(word.strip())
+                                    if normalize_ball_name(word) == normalize_ball_name(pokeball_data["Name"]):
+                                        self.recommended_Balls.append(pokeball_data["Name"])  # Always use the canonical name!
                             if self.recommended_Balls:
                                 self.UseBall = self.recommended_Balls[0]
                             else:  # If no valid balls found, use default ball
@@ -337,29 +344,21 @@ class Bot:
                 elif "Purchase successful" in message.text:
                     if f"@{trainer}" in message.text:
                         for pokeball_data in balls.LIST:
-                            if pokeball_data["Name"] == self.BuyBall:
-                                pokeball_data["Stock"] += (int(self.HowMany) - 1)
-                                with open("balls.py", "w") as f:
-                                    f.write("LIST = [\n")
-                                    for pokeball_data in balls.LIST:
-                                        f.write(f"    {pokeball_data},\n")
-                                    f.write("]")
-                        if BuyBall != ["Pokeball"]:
-                            print(f"Bought {HowMany} {BuyBall}s")
-                            self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
-                            wait_random_time(self)
-                            self.send_privmsg(message.channel, f'{CatchEmote} {BuyBall}')
-                            print(f"Throw {BuyBall}")
-                            self.send_Telegram_msg(f"Throw {BuyBall}")
-                            self.UsedBall = BuyBall
-                        elif BuyBall == ["Pokeball"]:
-                            print(f"Bought {HowMany} {BuyBall}s")
-                            self.send_Telegram_msg(f"Bought {HowMany} {BuyBall}s")
-                            wait_random_time(self)
-                            self.send_privmsg(message.channel, CatchEmote)
-                            print(f"Throw {BuyBall}")
-                            self.send_Telegram_msg(f"Throw {BuyBall}")
-                            self.UsedBall = BuyBall
+                            if normalize_ball_name(pokeball_data["Name"]) == normalize_ball_name(self.BuyBall):
+                                pokeball_data["Stock"] += int(self.HowMany-1)
+                                print(f"Stock von {pokeball_data['Name']} erhöht auf {pokeball_data['Stock']}")
+                        with open("balls.py", "w") as f:
+                            f.write("LIST = [\n")
+                            for pokeball_data in balls.LIST:
+                                f.write(f"    {pokeball_data},\n")
+                            f.write("]")
+                        print(f"Bought {self.HowMany} {self.BuyBall}s")
+                        self.send_Telegram_msg(f"Bought {self.HowMany} {self.BuyBall}s")
+                        wait_random_time(self)
+                        self.send_privmsg(message.channel, f'{CatchEmote} {self.BuyBall}')
+                        print(f"Throw {self.BuyBall}")
+                        self.send_Telegram_msg(f"Throw {self.BuyBall}")
+                        self.UsedBall = self.BuyBall
                             
                 #Look for failed purachase               
                 elif f"""You don't have enough""" in message.text:
@@ -378,7 +377,10 @@ class Bot:
                     if not self.Missed:
                         if AutoCatch:
                             if not self.WaitForMoney:
-                                if UserLow in message.text:
+                                # Lowercase and strip both sides for robust matching
+                                caught_list = message.text.lower()
+                                username = config.Username.lower().strip()
+                                if username in caught_list:
                                     print("Catched it! =D")
                                     self.send_Telegram_msg("Catched it! =D")
                                 else:
@@ -427,93 +429,127 @@ class Bot:
                 self.send_Telegram_msg("Stop Autocatch") 
 
     def select_ball_to_use(self):
+        # Try recommended balls in order, but only if in stock
         for recommended_ball in self.recommended_Balls:
             for pokeball_data in balls.LIST:
-                if pokeball_data["Name"] == recommended_ball:
-                    if pokeball_data["Stock"] > 0:
-                        return recommended_ball  # Return the first available recommended ball
-        return self.BuyBall  # If no recommended balls are available, return the default ball
+                if normalize_ball_name(pokeball_data["Name"]) == normalize_ball_name(recommended_ball) and pokeball_data["Stock"] > 0:
+                    return pokeball_data["Name"]
+
+        # Prefer Poké Ball if available, else Premier Ball if available
+        pokeball_stock = None
+        premierball_stock = None
+        for pokeball_data in balls.LIST:
+            if normalize_ball_name(pokeball_data["Name"]) == "pokeball":
+                pokeball_stock = pokeball_data["Stock"]
+            elif normalize_ball_name(pokeball_data["Name"]) == "premierball":
+                premierball_stock = pokeball_data["Stock"]
+
+        if pokeball_stock and pokeball_stock > 0:
+            return "Poke Ball"
+        if premierball_stock and premierball_stock > 0:
+            return "Premier Ball"
+
+        # Fallback: any ball in stock
+        for pokeball_data in balls.LIST:
+            if pokeball_data["Stock"] > 0:
+                return pokeball_data["Name"]
+
+        # If nothing is in stock, return the default ball (so the buy logic can trigger)
+        return self.BuyBall
 
     def ThrowBall(self, received_msg):
-            self.reload_modules()
-            message = self.parse_message(received_msg)
-            print(self.recommended_Balls)
-            
-            if self.should_miss:
-                if self.Calculatet_Time:
-                    self.UseBall = self.select_ball_to_use()
-                    # Iterate over each ball in the list
-                    for pokeball_data in balls.LIST:
-                        self.PokeballName = pokeball_data["Name"]
-                        self.PokeballStock = pokeball_data["Stock"]
-                        
-                        if self.PokeballName == self.UseBall:
-                            if self.PokeballStock > 0:  # Check if the ball is in stock
-                                pokeball_data["Stock"] -= 1  # Decrement stock count
-                                with open("balls.py", "w") as f:
-                                    f.write("LIST = [\n")
-                                    for pokeball_data in balls.LIST:
-                                        f.write(f"    {pokeball_data},\n")
-                                    f.write("]")
-                                
-                                # Throw logic based on the type of ball
-                                if self.PokeballName == "Pokeball":
-                                    wait_random_time(self)
-                                    print(f"Throw {self.UseBall}!")
-                                    self.send_Telegram_msg(f"Throw {self.UseBall}!")
-                                    self.send_privmsg(message.channel, f'{self.CatchEmote}')
-                                    self.UsedBall = self.UseBall
-                                    return
+        self.reload_modules()
+        message = self.parse_message(received_msg)
+        print(self.recommended_Balls)
 
-                                elif self.UseBall == "Fastball":
-                                    print("Fastball! Throw Fast!")
-                                    self.send_Telegram_msg("Quickball! Throw Fast!")
-                                    self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
-                                    self.UsedBall = self.UseBall
-                                    return
+        if self.should_miss:
+            if self.Calculatet_Time:
+                self.UseBall = self.select_ball_to_use()
+                # Iterate over each ball in the list
+                found_ball = False
+                for pokeball_data in balls.LIST:
+                    self.PokeballName = pokeball_data["Name"]
+                    self.PokeballStock = pokeball_data["Stock"]
 
-                                elif self.UseBall == "Timerball":
-                                    print(f"It's a Timerball. Slowpoke time! Wait for {config.TimerBallTime}")
-                                    self.send_Telegram_msg(f"It's a Timerball. Slowpoke time! Wait for {config.TimerBallTime}")
-                                    time.sleep(config.TimerBallTime)
-                                    print(f"Throw {self.UseBall}")
-                                    self.send_Telegram_msg(f"Throw {self.UseBall}")
-                                    self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
-                                    self.UsedBall = self.UseBall
-                                    return
+                    # Vergleiche immer normalisiert!
+                    #print(f"Vergleiche: {self.PokeballName} <-> {self.UseBall}")  # Debug
 
-                                else:
-                                    wait_random_time(self)
-                                    print(f"Throw {self.UseBall}")
-                                    self.send_Telegram_msg(f"Throw {self.UseBall}")
-                                    self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
-                                    self.UsedBall = self.UseBall
-                                    return
-
-                            # If the selected ball is not in stock, try again with the default ball
-                            if self.UseBall != self.BuyBall:
-                                print(f"No Usable Ball on Stock. Use {self.BuyBall}")
-                                self.send_Telegram_msg(f"No Usable Ball on Stock. Use {self.BuyBall}")
-                                self.UseBall = self.BuyBall
-                                self.ThrowBall(received_msg)  
-                            
-                            if self.UseBall ==  self.BuyBall:
-                                print(f"No {self.BuyBall} on Stock. Try to buy {self.HowMany}!")
-                                self.send_Telegram_msg(f"No {self.BuyBall} on Stock. Try to buy {self.HowMany}!")
+                    if normalize_ball_name(self.PokeballName) == normalize_ball_name(self.UseBall):
+                        found_ball = True
+                        if self.PokeballStock > 0:  # Check if the ball is in stock
+                            pokeball_data["Stock"] -= 1  # Decrement stock count
+                            with open("balls.py", "w") as f:
+                                f.write("LIST = [\n")
+                                for pokeball_data in balls.LIST:
+                                    f.write(f"    {pokeball_data},\n")
+                                f.write("]")
+                            # Throw logic based on the type of ball
+                            if is_pokeball_variant(self.PokeballName):
                                 wait_random_time(self)
-                                self.send_privmsg(message.channel, f'!pokeshop {self.BuyBall} {self.HowMany}')
+                                print(f"Throw {self.UseBall}!")
+                                self.send_Telegram_msg(f"Throw {self.UseBall}!")
+                                self.send_privmsg(message.channel, f'{self.CatchEmote}')  # Only the emote, no ball name
+                                self.UsedBall = self.UseBall
+                                return
 
+                            elif normalize_ball_name(self.UseBall) == "fastball":
+                                print("Fastball! Throw Fast!")
+                                self.send_Telegram_msg("Quickball! Throw Fast!")
+                                self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
+                                self.UsedBall = self.UseBall
+                                return
 
-                else:
-                    self.MoneyWaitMessage(received_msg)    
-            
+                            elif normalize_ball_name(self.UseBall) == "timerball":
+                                print(f"It's a Timerball. Slowpoke time! Wait for {config.TimerBallTime}")
+                                self.send_Telegram_msg(f"It's a Timerball. Slowpoke time! Wait for {config.TimerBallTime}")
+                                time.sleep(config.TimerBallTime)
+                                print(f"Throw {self.UseBall}")
+                                self.send_Telegram_msg(f"Throw {self.UseBall}")
+                                self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
+                                self.UsedBall = self.UseBall
+                                return
+
+                            else:
+                                wait_random_time(self)
+                                print(f"Throw {self.UseBall}")
+                                self.send_Telegram_msg(f"Throw {self.UseBall}")
+                                self.send_privmsg(message.channel, f'{self.CatchEmote} {self.UseBall}')
+                                self.UsedBall = self.UseBall
+                                return
+
+                        # If the selected ball is not in stock, try again with the default ball
+                        if self.UseBall != self.BuyBall:
+                            print(f"No Usable Ball on Stock. Use {self.BuyBall}")
+                            self.send_Telegram_msg(f"No Usable Ball on Stock. Use {self.BuyBall}")
+                            self.UseBall = self.BuyBall
+                            self.ThrowBall(received_msg)
+                            return
+
+                        if self.UseBall == self.BuyBall:
+                            print(f"No {self.BuyBall} on Stock. Try to buy {self.HowMany}!")
+                            self.send_Telegram_msg(f"No {self.BuyBall} on Stock. Try to buy {self.HowMany}!")
+                            wait_random_time(self)
+                            self.send_privmsg(message.channel, f'!pokeshop {self.BuyBall} {self.HowMany}')
+                            return
+
+                # Falls kein Ball gefunden wurde (z.B. Name stimmt nicht überein), trotzdem Kauf-Logik triggern
+                if not found_ball:
+                    print(f"Kein passender Ball gefunden. Versuche Standard-Ball {self.BuyBall}.")
+                    self.send_Telegram_msg(f"Kein passender Ball gefunden. Versuche Standard-Ball {self.BuyBall}.")
+                    self.UseBall = self.BuyBall
+                    self.ThrowBall(received_msg)
+                    return
+
             else:
-                self.Missed = True
-                print("Missed the catch on purpose!")  
-                self.send_Telegram_msg("Missed the catch on purpose!")
+                self.MoneyWaitMessage(received_msg)
+
+        else:
+            self.Missed = True
+            print("Missed the catch on purpose!")
+            self.send_Telegram_msg("Missed the catch on purpose!")
 
 
-        #Failsave Stuff
+        #Failsafe Stuff
     def has_internet_access(self):
         try:
             requests.get("http://www.google.com", timeout=1)
@@ -597,6 +633,8 @@ class Bot:
             print(f"Send {Emote} to collect money!") 
             self.send_Telegram_msg(f"Send {Emote} to collect money!")   
         
+def is_pokeball_variant(name):
+    return normalize_ball_name(name) in ["pokeball", "premierball"]
 
 def main():
     bot = Bot()
@@ -605,3 +643,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

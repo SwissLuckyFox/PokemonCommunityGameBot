@@ -13,7 +13,7 @@ except ImportError:
 def start_script(script_name):
     try:
         subprocess.Popen([sys.executable, script_name])
-        print(f"{script_name} wurde gestartet.")
+        print(f"{script_name} wird gestartet.")
     except Exception as e:
         print(f"Fehler beim Starten von {script_name}: {e}")
 
