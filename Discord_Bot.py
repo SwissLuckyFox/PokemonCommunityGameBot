@@ -172,7 +172,6 @@ class SelfBot(discord.Client):
                     f"The next daily reward can be claimed at:\n{next_time_str} on {next_date_str}."
                 )
                 delay_seconds = (scheduled_time - datetime.now()).total_seconds()
-                await asyncio.sleep(delay_seconds)
                 await self.send_daily_message()
             return
 
@@ -355,7 +354,7 @@ class SelfBot(discord.Client):
                 norm_item = normalize_ball_name(item_name)
                 if norm_item in inventory:
                     inventory[norm_item]["Stock"] += quantity
-                    self.log_to_telegram(f"Updated {inventory[norm_item]['Name']} stock to {inventory[norm_item]['Stock']}.")
+                    self.log_to_telegram(f"Updated {inventory[norm_item]["Name"]} stock to {inventory[norm_item]["Stock"]}.")
 
             # Write the updated inventory back to balls.py
             with open("balls.py", "w", encoding="utf-8") as file:
@@ -374,7 +373,7 @@ class SelfBot(discord.Client):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as file:
                 config = file.read()
-            auto_time_match = re.search(r'DiscordAutoTime\s*=\s*(true|false)', config, re.IGNORECASE)
+            auto_time_match = re.search(r"DiscordAutoTime\s*=\s*(true|false)", config, re.IGNORECASE)
             if auto_time_match:
                 return auto_time_match.group(1).lower() == "true"
         except Exception as e:
