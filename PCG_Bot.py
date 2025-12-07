@@ -82,9 +82,8 @@ def remove_prefix(string, prefix):
   
 # Generate a random number in secounds
 def wait_random_time(Bot):
-    Bot.reload_modules()
     random_time = random.randint(config.RandomeFrom, config.RandomeTo)
-    print(f"Wait for {random_time} secounds.")
+    print(f"[PCG_Bot-TIMER] Wait for {random_time} secounds.")
     if config.ShowRandomeTime:
         Bot.send_Telegram_msg(f"Wait for {random_time} secounds.")
         time.sleep(random_time)
@@ -138,12 +137,9 @@ class Bot:
                 self.send_command(f"NICK {self.username}")
                 for channel in self.channels:
                     self.send_command(f"JOIN #{channel}")
-                    print(
-                        f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-                    )
-                    self.send_Telegram_msg(
-                        f"{self.username} is going to {channel}`s Safarizone to Catch some Pokemon!"
-                    )
+                    print(f"[PCG_Bot-CONNECT] {self.username} is going to {channel}'s Safarizone to Catch some Pokemon!")
+                    # Temporarily disabled to debug
+                    # self.send_Telegram_msg(f"{self.username} is going to {channel}'s Safarizone to Catch some Pokemon!")
                 self.loop_for_messages()
             except (OSError, socket.error, ssl.SSLError) as e:
                 print(f"Error during connection: {e}")
@@ -274,7 +270,7 @@ class Bot:
                                     self.Missed = False
                                     self.WaitForMoney = False
                                     self.recommended_Balls = pokemon_data["UseBalls"].split() if pokemon_data["UseBalls"] else []
-                                    print(f"It's a {self.pokemon_name}! DexNr: {self.DexNr}!")
+                                    print(f"[PCG_Bot-POKEMON] It's a {self.pokemon_name}! DexNr: {self.DexNr}!")
                                     self.send_Telegram_msg(f"It's a {self.pokemon_name}! DexNr: {self.DexNr}!")
                                     if self.can_catch:
                                         if self.recommended_Balls != []:
@@ -285,7 +281,7 @@ class Bot:
                                             self.ThrowBall(received_msg)
                                     
                                         elif self.UseRecommended:
-                                            print(f"Wait for Deemonriders Recommendations")
+                                            print(f"[PCG_Bot-WAIT] Wait for Deemonriders Recommendations")
                                             self.send_Telegram_msg(f"Wait for Deemonriders Recommendations")
 
 
@@ -359,6 +355,7 @@ class Bot:
                         print(f"Throw {self.BuyBall}")
                         self.send_Telegram_msg(f"Throw {self.BuyBall}")
                         self.UsedBall = self.BuyBall
+                        return
                             
                 #Look for failed purachase               
                 elif f"""You don't have enough""" in message.text:
@@ -462,7 +459,7 @@ class Bot:
         message = self.parse_message(received_msg)
         print(self.recommended_Balls)
 
-        if self.should_miss:
+        if not self.should_miss():
             if self.Calculatet_Time:
                 self.UseBall = self.select_ball_to_use()
                 # Iterate over each ball in the list
@@ -482,11 +479,13 @@ class Bot:
                                 f.write("LIST = [\n")
                                 for ball in balls.LIST:
                                     f.write(f"    {ball},\n")
-                                f.write("]")
+                                f.write("]\n")
+                            # Reload the module to pick up the updated stock
+                            importlib.reload(balls)
                             # Throw logic based on the type of ball
                             if is_pokeball_variant(self.PokeballName):
                                 wait_random_time(self)
-                                print(f"Throw {self.UseBall}!")
+                                print(f"[PCG_Bot-THROW] Throw {self.UseBall}!")
                                 self.send_Telegram_msg(f"Throw {self.UseBall}!")
                                 self.send_privmsg(message.channel, f'{self.CatchEmote}')  # Only the emote, no ball name
                                 self.UsedBall = self.UseBall
@@ -639,7 +638,6 @@ def is_pokeball_variant(name):
 def main():
     bot = Bot()
     bot.init()
-    wait_if_not_in_timeframe(bot, timeframes)
 
 if __name__ == "__main__":
     main()
