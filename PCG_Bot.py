@@ -480,8 +480,8 @@ class Bot:
                             pokeball_data["Stock"] -= 1  # Decrement stock count
                             with open("balls.py", "w") as f:
                                 f.write("LIST = [\n")
-                                for pokeball_data in balls.LIST:
-                                    f.write(f"    {pokeball_data},\n")
+                                for ball in balls.LIST:
+                                    f.write(f"    {ball},\n")
                                 f.write("]")
                             # Throw logic based on the type of ball
                             if is_pokeball_variant(self.PokeballName):
