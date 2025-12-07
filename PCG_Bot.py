@@ -329,8 +329,12 @@ class Bot:
                                         self.recommended_Balls.append(pokeball_data["Name"])  # Always use the canonical name!
                             if self.recommended_Balls:
                                 self.UseBall = self.recommended_Balls[0]
+                                print(f"[PCG_Bot-RECO] Using recommended ball: {self.UseBall}")
+                                self.send_Telegram_msg(f"Using recommended ball: {self.UseBall}")
                             else:  # If no valid balls found, use default ball
                                 self.UseBall = self.BuyBall
+                                print(f"[PCG_Bot-RECO] No valid ball recommended, using default: {self.BuyBall}")
+                                self.send_Telegram_msg(f"No valid ball recommended, using default: {self.BuyBall}")
                             self.ThrowBall(received_msg)
                         #else:
                             #print("Recommendations are on cooldown. Skipping...")
@@ -474,6 +478,8 @@ class Bot:
                     if normalize_ball_name(self.PokeballName) == normalize_ball_name(self.UseBall):
                         found_ball = True
                         if self.PokeballStock > 0:  # Check if the ball is in stock
+                            # Reload balls module to get current stock
+                            importlib.reload(balls)
                             pokeball_data["Stock"] -= 1  # Decrement stock count
                             with open("balls.py", "w") as f:
                                 f.write("LIST = [\n")
