@@ -1,3 +1,9 @@
+# Discord Selfbot Library
+discord.py-self==2.0.1
+
+# Telegram Bot Framework
 aiogram==3.17.0
-discord.py==2.4.0
-Requests==2.32.3
+
+# HTTP Requests
+requests==2.32.3
+
