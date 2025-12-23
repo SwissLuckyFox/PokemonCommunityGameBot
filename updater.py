@@ -92,12 +92,17 @@ class BotUpdater:
         """Pull the latest version from GitHub"""
         try:
             # Check if git is available
-            result = subprocess.run(["git", "--version"], capture_output=True, text=True)
-            if result.returncode != 0:
-                return False, "Git is not installed or not available in PATH"
+            try:
+                result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=5)
+                if result.returncode != 0:
+                    return False, "Git is not installed or not available in PATH"
+            except FileNotFoundError:
+                return False, "Git is not installed. Please install Git from https://git-scm.com/"
+            except Exception as e:
+                return False, f"Cannot access Git: {str(e)}"
             
             # Check if we're in a git repository
-            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True)
+            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5)
             
             if result.returncode == 0:
                 # We're in a git repo, pull updates
@@ -254,18 +259,29 @@ class BotUpdater:
     def check_for_updates(self):
         """Check if updates are available on GitHub"""
         try:
+            # Check if git is available
+            try:
+                result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=5)
+                if result.returncode != 0:
+                    return None, "Git is not installed. Please install Git from https://git-scm.com/ to use the update feature."
+            except FileNotFoundError:
+                return None, "Git is not installed or not in PATH. Please install Git from https://git-scm.com/ and ensure it's added to your system PATH."
+            except Exception as e:
+                return None, f"Cannot access Git: {str(e)}. Please install Git from https://git-scm.com/"
+            
             # Check if we're in a git repository
-            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True)
+            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5)
             
             if result.returncode == 0:
                 # Fetch latest changes
-                subprocess.run(["git", "fetch", "origin", "master"], capture_output=True, text=True)
+                subprocess.run(["git", "fetch", "origin", "master"], capture_output=True, text=True, timeout=30)
                 
                 # Check if local is behind remote
                 result = subprocess.run(
                     ["git", "rev-list", "HEAD..origin/master", "--count"],
                     capture_output=True,
-                    text=True
+                    text=True,
+                    timeout=5
                 )
                 
                 if result.returncode == 0:
@@ -279,6 +295,8 @@ class BotUpdater:
             else:
                 return None, "Not a git repository. Cannot check for updates automatically."
                 
+        except FileNotFoundError:
+            return None, "Git is not installed or not in PATH. Please install Git from https://git-scm.com/ and ensure it's added to your system PATH."
         except Exception as e:
             return None, f"Error checking for updates: {str(e)}"
 
