@@ -343,20 +343,30 @@ class Bot:
                 #Try to throw after Purchase   
                 elif "Purchase successful" in message.text:
                     if f"@{trainer}" in message.text:
+                        # Update stock for the purchased ball
                         for pokeball_data in balls.LIST:
                             if normalize_ball_name(pokeball_data["Name"]) == normalize_ball_name(self.BuyBall):
-                                pokeball_data["Stock"] += int(self.HowMany-1)
-                                print(f"Stock von {pokeball_data['Name']} erhöht auf {pokeball_data['Stock']}")
-                        with open("balls.py", "w") as f:
+                                pokeball_data["Stock"] += int(self.HowMany)
+                                print(f"[PCG_Bot-PURCHASE] Stock of {pokeball_data['Name']} increased to {pokeball_data['Stock']}")
+                                break
+                        
+                        # Save to file
+                        with open("balls.py", "w", encoding="utf-8") as f:
                             f.write("LIST = [\n")
                             for pokeball_data in balls.LIST:
-                                f.write(f"    {pokeball_data},\n")
-                            f.write("]")
-                        print(f"Bought {self.HowMany} {self.BuyBall}s")
+                                f.write(f'    {{"Name": "{pokeball_data["Name"]}", "Stock": {pokeball_data["Stock"]}}},\n')
+                            f.write("]\n")
+                        
+                        # Reload the balls module to ensure changes are loaded
+                        importlib.reload(balls)
+                        
+                        print(f"[PCG_Bot-PURCHASE] Bought {self.HowMany} {self.BuyBall}s, saved to file")
                         self.send_Telegram_msg(f"Bought {self.HowMany} {self.BuyBall}s")
+                        
+                        # Now throw one ball (this will decrement stock by 1)
                         wait_random_time(self)
                         self.send_privmsg(message.channel, f'{CatchEmote} {self.BuyBall}')
-                        print(f"Throw {self.BuyBall}")
+                        print(f"[PCG_Bot-THROW] Throw {self.BuyBall}")
                         self.send_Telegram_msg(f"Throw {self.BuyBall}")
                         self.UsedBall = self.BuyBall
                         return
@@ -481,13 +491,17 @@ class Bot:
                             # Reload balls module to get current stock
                             importlib.reload(balls)
                             pokeball_data["Stock"] -= 1  # Decrement stock count
-                            with open("balls.py", "w") as f:
+                            
+                            # Save to file with proper formatting
+                            with open("balls.py", "w", encoding="utf-8") as f:
                                 f.write("LIST = [\n")
                                 for ball in balls.LIST:
-                                    f.write(f"    {ball},\n")
+                                    f.write(f'    {{"Name": "{ball["Name"]}", "Stock": {ball["Stock"]}}},\n')
                                 f.write("]\n")
+                            
                             # Reload the module to pick up the updated stock
                             importlib.reload(balls)
+                            print(f"[PCG_Bot-STOCK] Decremented {pokeball_data['Name']}, new stock: {pokeball_data['Stock']}")
                             # Throw logic based on the type of ball
                             if is_pokeball_variant(self.PokeballName):
                                 wait_random_time(self)

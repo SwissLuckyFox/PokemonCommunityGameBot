@@ -370,27 +370,33 @@ class SelfBot(discord.Client):
 
     def update_inventory(self, items_received):
         try:
+            import importlib
             from balls import LIST
-
-            # Create a dictionary for easy lookup (normalized names)
-            inventory = {normalize_ball_name(ball["Name"]): ball for ball in LIST}
+            
+            # Reload balls to get current state
+            import balls as balls_module
+            importlib.reload(balls_module)
 
             # Update the stock for each received item
             for item_name, quantity in items_received.items():
                 norm_item = normalize_ball_name(item_name)
-                if norm_item in inventory:
-                    inventory[norm_item]["Stock"] += quantity
-                    self.log_to_telegram(f"Updated {inventory[norm_item]['Name']} stock to {inventory[norm_item]['Stock']}.")
+                for ball in balls_module.LIST:
+                    if normalize_ball_name(ball["Name"]) == norm_item:
+                        ball["Stock"] += quantity
+                        self.log_to_telegram(f"[Discord] Updated {ball['Name']} stock to {ball['Stock']}.")
+                        break
 
             # Write the updated inventory back to balls.py
             with open("balls.py", "w", encoding="utf-8") as file:
                 file.write("LIST = [\n")
-                for ball in inventory.values():
-                    file.write(f"    {ball},\n")
+                for ball in balls_module.LIST:
+                    file.write(f'    {{"Name": "{ball["Name"]}", "Stock": {ball["Stock"]}}},\n')
                 file.write("]\n")
+            
+            self.log_to_telegram("[Discord] Inventory saved to balls.py")
 
         except Exception as e:
-            self.log_to_telegram(f"Error while updating inventory: {e}")
+            self.log_to_telegram(f"[Discord] Error while updating inventory: {e}")
 
     def normalize_ball_name(name):
         return name.lower().replace(" ", "").replace("-", "")

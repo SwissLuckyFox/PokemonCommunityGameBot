@@ -35,4 +35,13 @@ Auto Purchase:
 Balance and Time Needed Calculation:
 
   If there's insufficient funds, the bot calculates the time required to reach the desired balance based on average income.
-  
+
+
+Auto Update System:
+
+  Easily update the bot to the latest version from GitHub.
+  All your tokens, credentials, and settings are automatically preserved.
+  Ball stock data is maintained across updates.
+  Automatic backups are created before each update.
+  Can be triggered via Telegram commands (!CheckUpdate, !Update) or run standalone (python update_bot.py).
+  See UPDATE_GUIDE.md for detailed instructions.

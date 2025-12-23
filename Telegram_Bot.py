@@ -5,12 +5,14 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import Message
 import config  # Direct access to configuration values
 import balls  # Direct access to the ball list
+from updater import BotUpdater  # Import the updater
 
 
 class TelegramBot:
     def __init__(self):
         self.bot = Bot(token=config.TelegramBotToken)
         self.dispatcher = Dispatcher()
+        self.updater = BotUpdater()  # Initialize updater
 
         # Register command handlers
         self.dispatcher.message.register(self.process_command)
@@ -26,10 +28,10 @@ class TelegramBot:
         """
         Saves the ball list to balls.py in a nicely formatted way.
         """
-        with open("balls.py", "w") as file:
+        with open("balls.py", "w", encoding="utf-8") as file:
             file.write("LIST = [\n")
             for ball in balls.LIST:
-                file.write(f"    {ball},\n")
+                file.write(f'    {{"Name": "{ball["Name"]}", "Stock": {ball["Stock"]}}},\n')
             file.write("]\n")
 
     def save_config(self):
@@ -86,7 +88,9 @@ class TelegramBot:
                     "!Set <config_key>=<value> - Set the value of a configuration key.\n"
                     "!Set Timeframe <day> start: <HHMM> end: <HHMM> interval min <min> max <max> - Update the timeframe for a specific day.\n"
                     "!Show Timeframes - Display all timeframes in a friendly format.\n"
-                    "!ConfigKeys - List all possible configuration keys."
+                    "!ConfigKeys - List all possible configuration keys.\n"
+                    "!CheckUpdate - Check if updates are available on GitHub.\n"
+                    "!Update - Update the bot to the latest version (preserves your config)."
                 )
                 await message.answer(commands_list)
 
@@ -179,6 +183,12 @@ class TelegramBot:
                 else:
                     await message.answer("Unknown key. Use the !Commands command to see available keys.")
 
+            elif command == "checkupdate":
+                await self.check_for_updates(message)
+
+            elif command == "update":
+                await self.update_bot(message)
+
             else:
                 await message.answer("Unknown command. Use the !Commands command to see available commands.")
 
@@ -237,6 +247,52 @@ class TelegramBot:
                 await message.answer("The amount cannot be below 0.")
         else:
             await message.answer("Sorry. Ball not found.")
+
+    async def check_for_updates(self, message: Message):
+        """Check if updates are available on GitHub"""
+        await message.answer("Checking for updates...")
+        
+        has_updates, msg = self.updater.check_for_updates()
+        
+        if has_updates is True:
+            await message.answer(f"✅ {msg}\n\nUse !Update to install the latest version.")
+        elif has_updates is False:
+            await message.answer(f"✅ {msg}")
+        else:
+            await message.answer(f"⚠ {msg}")
+
+    async def update_bot(self, message: Message):
+        """Update the bot to the latest version"""
+        await message.answer("🔄 Starting update process...\n\nThis may take a moment. Your configuration and ball stock will be preserved.")
+        
+        # Run the update in a separate thread to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        
+        def run_update():
+            return self.updater.update_bot()
+        
+        success, log = await loop.run_in_executor(None, run_update)
+        
+        # Send the log in chunks if it's too long
+        max_length = 4000  # Telegram message limit is 4096, leave some margin
+        log_lines = log.split('\n')
+        current_message = ""
+        
+        for line in log_lines:
+            if len(current_message) + len(line) + 1 > max_length:
+                await message.answer(current_message)
+                current_message = line + "\n"
+            else:
+                current_message += line + "\n"
+        
+        if current_message:
+            await message.answer(current_message)
+        
+        if success:
+            await message.answer("⚠ REMINDER: Please restart the bot manually for all changes to take effect!")
+        else:
+            await message.answer("❌ Update failed. Check the logs above for details.")
 
     async def send_message(self, text: str):
         await self.bot.send_message(chat_id=config.TelegramChatID, text=text)
