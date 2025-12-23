@@ -24,6 +24,10 @@ discord.state.ConnectionState.parse_ready_supplemental = patched_parse_ready_sup
 BALLS_FILE = "balls.py"
 CONFIG_FILE = "config.py"
 
+# Helper function to normalize ball names
+def normalize_ball_name(name: str) -> str:
+    return name.replace(" ", "").lower()
+
 class SelfBot(discord.Client):
     def __init__(self, telegram_bot, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -191,8 +195,11 @@ class SelfBot(discord.Client):
             return
 
         try:
-            await channel.send(self.message)
-            self.log_to_telegram(f"Discord Message sent: {self.message}")
+            sent_message = await channel.send(self.message)
+            if sent_message is None:
+                self.log_to_telegram(f"Failed to send Discord message: {self.message}")
+                return
+            self.log_to_telegram(f"Discord Message sent successfully: {self.message}")
             self.last_sent_date = today
             self.save_config(today)
             if self.timeframe:
@@ -208,6 +215,10 @@ class SelfBot(discord.Client):
                 delay_seconds = (scheduled_time - datetime.now()).total_seconds()
                 await asyncio.sleep(delay_seconds)
                 await self.send_daily_message()
+        except discord.Forbidden as e:
+            self.log_to_telegram(f"Permission error: The bot doesn't have permission to send messages in this channel. Error: {e}")
+        except discord.HTTPException as e:
+            self.log_to_telegram(f"HTTP error while sending Discord message: {e}")
         except Exception as e:
             self.log_to_telegram(f"Error while sending the Discord message: {e}")
 
