@@ -205,6 +205,7 @@ class TelegramBot:
         await message.answer(response)
 
     async def show_stock(self, message: Message, ball_name: str):
+        self.reload_modules()  # Reload to get fresh data from file
         if ball_name.lower() == "all":
             response = "Stock for all balls:\n"
             for ball in balls.LIST:
@@ -218,6 +219,7 @@ class TelegramBot:
                 await message.answer(f"Sorry, {ball_name} not found.")
 
     async def add_ball(self, message: Message, ball_name: str, amount: int):
+        self.reload_modules()  # Reload to get fresh data from file
         ball = self.find_ball(ball_name)
         if ball:
             ball["Stock"] += amount
@@ -227,6 +229,7 @@ class TelegramBot:
             await message.answer("Sorry. Ball not found.")
 
     async def remove_ball(self, message: Message, ball_name: str, amount: int):
+        self.reload_modules()  # Reload to get fresh data from file
         ball = self.find_ball(ball_name)
         if ball:
             removed_amount = min(ball["Stock"], amount)
@@ -237,6 +240,7 @@ class TelegramBot:
             await message.answer("Sorry. Ball not found.")
 
     async def set_stock(self, message: Message, ball_name: str, amount: int):
+        self.reload_modules()  # Reload to get fresh data from file
         ball = self.find_ball(ball_name)
         if ball:
             if amount >= 0:
