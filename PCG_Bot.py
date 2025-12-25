@@ -488,9 +488,8 @@ class Bot:
                     if normalize_ball_name(self.PokeballName) == normalize_ball_name(self.UseBall):
                         found_ball = True
                         if self.PokeballStock > 0:  # Check if the ball is in stock
-                            # Reload balls module to get current stock
-                            importlib.reload(balls)
-                            pokeball_data["Stock"] -= 1  # Decrement stock count
+                            # Decrement stock count first
+                            pokeball_data["Stock"] -= 1
                             
                             # Save to file with proper formatting
                             with open("balls.py", "w", encoding="utf-8") as f:
