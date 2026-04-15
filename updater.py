@@ -13,6 +13,8 @@ class BotUpdater:
         self.repo_url = "https://github.com/SwissLuckyFox/PokemonCommunityGameBot.git"
         self.backup_dir = "backup_before_update"
         self.temp_dir = "temp_update"
+        # Get the directory where this script is located
+        self.bot_dir = os.path.dirname(os.path.abspath(__file__))
         
         # Configuration keys that should be preserved during update
         self.preserve_keys = [
@@ -57,16 +59,18 @@ class BotUpdater:
         try:
             # Create backup directory with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_path = f"{self.backup_dir}_{timestamp}"
+            backup_path = os.path.join(self.bot_dir, f"{self.backup_dir}_{timestamp}")
             os.makedirs(backup_path, exist_ok=True)
             
             # Backup config.py
-            if os.path.exists("config.py"):
-                shutil.copy2("config.py", os.path.join(backup_path, "config.py"))
+            config_file = os.path.join(self.bot_dir, "config.py")
+            if os.path.exists(config_file):
+                shutil.copy2(config_file, os.path.join(backup_path, "config.py"))
             
             # Backup balls.py
-            if os.path.exists("balls.py"):
-                shutil.copy2("balls.py", os.path.join(backup_path, "balls.py"))
+            balls_file = os.path.join(self.bot_dir, "balls.py")
+            if os.path.exists(balls_file):
+                shutil.copy2(balls_file, os.path.join(backup_path, "balls.py"))
             
             print(f"Backup created at: {backup_path}")
             return backup_path, True
@@ -102,12 +106,12 @@ class BotUpdater:
                 return False, f"Cannot access Git: {str(e)}"
             
             # Check if we're in a git repository
-            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5, cwd=self.bot_dir)
             
             if result.returncode == 0:
                 # We're in a git repo, pull updates
                 print("Pulling latest changes from GitHub...")
-                result = subprocess.run(["git", "pull", "origin", "master"], capture_output=True, text=True)
+                result = subprocess.run(["git", "pull", "origin", "master"], capture_output=True, text=True, cwd=self.bot_dir)
                 
                 if result.returncode == 0:
                     print("Successfully pulled latest version")
@@ -126,7 +130,8 @@ class BotUpdater:
                 result = subprocess.run(
                     ["git", "clone", self.repo_url, self.temp_dir],
                     capture_output=True,
-                    text=True
+                    text=True,
+                    cwd=self.bot_dir
                 )
                 
                 if result.returncode != 0:
@@ -141,7 +146,8 @@ class BotUpdater:
         """Merge preserved configuration with new config file"""
         try:
             # Read the new config file
-            with open("config.py", "r", encoding="utf-8") as f:
+            config_file = os.path.join(self.bot_dir, "config.py")
+            with open(config_file, "r", encoding="utf-8") as f:
                 config_content = f.read()
             
             # Update each preserved key in the new config
@@ -166,7 +172,7 @@ class BotUpdater:
                 config_content = re.sub(pattern, replacement, config_content, flags=re.MULTILINE)
             
             # Write the updated config
-            with open("config.py", "w", encoding="utf-8") as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 f.write(config_content)
             
             print("Configuration merged successfully")
@@ -188,7 +194,8 @@ class BotUpdater:
                     ball["Stock"] = preserved_balls[ball["Name"]]
             
             # Save the updated ball list
-            with open("balls.py", "w", encoding="utf-8") as f:
+            balls_file = os.path.join(self.bot_dir, "balls.py")
+            with open(balls_file, "w", encoding="utf-8") as f:
                 f.write("LIST = [\n")
                 for ball in balls.LIST:
                     f.write(f'    {{"Name": "{ball["Name"]}", "Stock": {ball["Stock"]}}},\n')
@@ -243,9 +250,10 @@ class BotUpdater:
             log.append("⚠ Ball stock merge had issues")
         
         # Step 6: Cleanup
-        if os.path.exists(self.temp_dir):
+        temp_dir_full = os.path.join(self.bot_dir, self.temp_dir)
+        if os.path.exists(temp_dir_full):
             try:
-                shutil.rmtree(self.temp_dir)
+                shutil.rmtree(temp_dir_full)
                 log.append("\nStep 6: Cleaned up temporary files")
             except:
                 pass
@@ -261,7 +269,7 @@ class BotUpdater:
         try:
             # Check if git is available
             try:
-                result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=5)
+                result = subprocess.run(["git", "--version"], capture_output=True, text=True, timeout=5, cwd=self.bot_dir)
                 if result.returncode != 0:
                     return None, "Git is not installed. Please install Git from https://git-scm.com/ to use the update feature."
             except FileNotFoundError:
@@ -270,18 +278,19 @@ class BotUpdater:
                 return None, f"Cannot access Git: {str(e)}. Please install Git from https://git-scm.com/"
             
             # Check if we're in a git repository
-            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(["git", "rev-parse", "--git-dir"], capture_output=True, text=True, timeout=5, cwd=self.bot_dir)
             
             if result.returncode == 0:
                 # Fetch latest changes
-                subprocess.run(["git", "fetch", "origin", "master"], capture_output=True, text=True, timeout=30)
+                subprocess.run(["git", "fetch", "origin", "master"], capture_output=True, text=True, timeout=30, cwd=self.bot_dir)
                 
                 # Check if local is behind remote
                 result = subprocess.run(
                     ["git", "rev-list", "HEAD..origin/master", "--count"],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
+                    cwd=self.bot_dir
                 )
                 
                 if result.returncode == 0:
