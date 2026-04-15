@@ -245,28 +245,36 @@ class SelfBot(discord.Client):
             # Remove Discord emoji codes
             cleaned_reward = re.sub(r"<:[^:]+:\d+>", "", reward_text)
 
-            # Extract only the lines with items or money (e.g. "$7", "1x Poke Ball")
-            item_lines = []
-            for line in cleaned_reward.splitlines():
-                line = line.strip()
-                if re.match(r"^\$?\d+(\s*x\s*[\w\s]+)?$", line) or "x " in line:
-                    item_lines.append(line)
+            # Parse items from the cleaned reward and update inventory
+            try:
+                _, items_received = self.parse_message(cleaned_reward)
+                if items_received:
+                    self.update_inventory(items_received)
+            except Exception as e:
+                self.log_to_telegram(f"Error parsing items from already-claimed message: {e}")
 
             # Prepare next claim time
             next_message_time = self.parse_next_message_time(message.content)
             if next_message_time:
                 next_time_str = next_message_time.strftime("%H:%M")
                 next_date_str = next_message_time.strftime("%d.%m.%Y")
-                summary = (
-                    "You already claimed your items today. The reward was:\n"
-                    + "\n".join(item_lines)
-                    + f"\n\nThe next daily reward can be claimed at:\n{next_time_str} on {next_date_str}."
-                )
+
+                # Build a short summary from parsed items (if any)
+                summary_lines = ["You already claimed your items today."]
+                if items_received:
+                    for item, amount in items_received.items():
+                        summary_lines.append(f" {amount}x {item}")
+                summary_lines.append(f"\nThe next daily reward can be claimed at:\n{next_time_str} on {next_date_str}.")
+                summary = "\n".join(summary_lines)
                 self.log_to_telegram(summary)
                 if self.is_auto_time_enabled():
                     self.update_discord_message_time(next_time_str)
-                new_date = next_message_time.strftime("%Y-%m-%d")
-                self.save_config(new_date)
+
+                # Save that we have a reward for today
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                self.last_sent_date = today_str
+                self.save_config(today_str)
+
                 # Always pause until next time
                 delay_seconds = (next_message_time - datetime.now()).total_seconds()
                 print(f"Sleeping for {delay_seconds} seconds until next daily message.")
